@@ -2,7 +2,9 @@ Replication package for "Testing for Underpowered Literatures"
 Stefan Faridani
 February 26, 2024
 
-This is a replication package for transparency purposes only. A user-friendly R package for estimation and inference is forthcoming. For now, the only use-case of this package is to verify how the results in the paper were generated. 
+This is a replication package for transparency purposes only. A user-friendly R package for estimation and inference is forthcoming. For now, the only use-case of this package is to verify how the results in the paper were generated. This package will continue to change until the paper is published.
+
+The paper is available at https://www.stefanfaridani.com/research
 
 To replicate the results in the 2/26/2024 version of the paper, perform the following steps:
 
