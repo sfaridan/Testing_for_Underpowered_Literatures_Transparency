@@ -8,7 +8,7 @@ To replicate the results in the 2/26/2024 version of the paper, perform the foll
 
 1. Download the file "ML-_Summary_Statistics.xlsx" from the open data posting of Klein et al. at: https://osf.io/dmf62 
 
-2. Download the Brodeur et al. replication package from their open data posting at: https://www.openicpsr.org/openicpsr/project/120246/version/V1/view 
+2. Download the Brodeur et al. (2020) replication package from their open data posting at: https://www.openicpsr.org/openicpsr/project/120246/version/V1/view 
 
 3. Place the downloaded files "ML-_Summary_Statistics.xlsx" and "MM data.dta" into the data folder
 
