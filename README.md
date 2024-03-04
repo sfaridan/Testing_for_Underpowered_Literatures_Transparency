@@ -16,4 +16,6 @@ To replicate the results in the 2/26/2024 version of the paper, perform the foll
 
 4. Change the filepath called "root" in the scripts "code/scripts/Application_MM.R" and "code/scripts/Application_ML.R" to the appropriate path for your machine. 
 
-5. Run the script "Main.R" 
+5. Run the script "Main.R"
+
+6. Run the Script "Figures_For_Slides.R" (seperate to avoid interfernece with ggplot)
