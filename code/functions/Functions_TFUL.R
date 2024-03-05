@@ -451,7 +451,7 @@ compute_cpower <- function(sites, mean1, mean2, sd1, sd2, n1, n2,c=sqrt(2)){
   #compute standard error
   se_es <- sqrt(sum(sd1[ind]^2/n1[ind]*weights^2) +sum(sd2[ind]^2/n2[ind]*weights^2)   )
   se_hs <- se_es / sqrt(sd1[ind]^2/n1[ind]+sd2[ind]^2/n2[ind]) 
-  se_pwrs <- se_hs * (c*(dnorm(1.96-c*hs)+dnorm(-c*hs-1.96)) - (dnorm(1.96-hs)+dnorm(-hs-1.96)))  #Taylor approximation
+  se_pwrs <- se_hs * abs(c*(dnorm(1.96-c*hs)+dnorm(-c*hs-1.96)) - (dnorm(1.96-hs)+dnorm(-hs-1.96)))  #Taylor approximation
   se_pwr <- mean(se_pwrs) /sqrt(length(se_pwrs))
   print(paste0("se / es: ", se_es/es, ", se_pwr: ",se_pwr, ", delta: ",mean(pwr_status_quo)- mean(pwr_c) ))
   
