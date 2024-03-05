@@ -12,10 +12,10 @@ root <- "C:/Users/stefa/OneDrive/Documents/R/Underpowered_Literatures_Transparen
 setwd(root)
 
 #load in functions
-source("code/functions/Functions_TFUL.R")
+source(paste0(root,"/code/functions/Functions_TFUL.R"))
 
 #Generate tables and figures
-source("code/scripts/Application_MM.R")
-source("code/scripts/Application_ML.R")
-source("code/scripts/Application_ML_Alternative.R")
-source("code/scripts/compute_pvalues")
+source(paste0(root,"/code/scripts/Application_MM.R"))
+source(paste0(root,"/code/scripts/Application_ML.R"))
+source(paste0(root,"/code/scripts/Application_ML_Alternative.R"))
+source(paste0(root,"/code/scripts/compute_pvalues.R"))

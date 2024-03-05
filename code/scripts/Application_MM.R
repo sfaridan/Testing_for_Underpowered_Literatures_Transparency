@@ -13,7 +13,8 @@ set.seed(1)
 setwd(root)
 
 #load in functions
-source("code/functions/Functions_TFUL.R")
+source(paste0(root,"/code/functions/Functions_TFUL.R"))
+library(ggplot2)
 
 #Load in the data
 setwd(paste0(root,"/data"))
@@ -77,8 +78,6 @@ table_econ <- cbind(out_RCT_tscores,out_other_tscores,out_RCT_articles,out_other
 #Save tables
 setwd(paste0(root,"/output/tables"))
 write.csv(table_econ, file = 'results_MM.csv')
-write.table(c("P-value of RCTS=non-RCTs (by tscores): ",pval_tscores, ", P-value of RCTS=non-RCTs (by articles): ",pval_articles )
-,file='pvals_rct_vs_nonrct.txt',sep=" ")
 
 
 #Make plots

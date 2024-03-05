@@ -10,8 +10,8 @@
 setwd(root)
 
 #load in functions
-source("code/functions/Functions_TFUL.R")
-
+source(paste0(root,"/code/functions/Functions_TFUL.R"))
+library(ggplot2)
 
 
 #Many Labs
@@ -166,7 +166,7 @@ table_ML <- cbind(ML_by_tscores,ML_by_sites,ML_by_tscores_r,ML_by_sites_r)
 print(table_ML)
 setwd(paste0(root,"/output/tables"))
 write.csv(table_ML, file = 'results_ML.csv')
-write.table(paste0("Delta_hat_ALT: ", mean(deltas),", SE: ", sqrt(var),", SE Cluster:",sqrt(var_cluster) ),file='results_ML_alt.txt')
+write.table(paste0("Delta_hat_ALT: ", mean(deltas_by_intervention),", SE: ", sqrt(var),", SE Cluster:",sqrt(var_cluster) ),file='results_ML_alt.txt')
 
 #Compute ML power gain over different cs
 cs <- sqrt(1+(0:10)/10)

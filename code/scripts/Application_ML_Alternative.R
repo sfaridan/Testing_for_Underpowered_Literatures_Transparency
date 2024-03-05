@@ -10,7 +10,8 @@
 setwd(root)
 
 #load in functions
-source("code/functions/Functions_TFUL.R")
+source(paste0(root,"/code/functions/Functions_TFUL.R"))
+library(ggplot2)
 
 setwd(paste0(root,"/data"))
 filename <- "ML-_Summary_Statistics.xlsx"
@@ -84,7 +85,7 @@ for (cc in 1:length(cs))
     var_uncluster <- var_uncluster / length(ses)
     sd_deltas_alt[cc] <-sqrt(var_cluster)
     sd_deltas_alt_uncluster[cc] <-sqrt(var_uncluster)
-    print(cbind(cs[1:cc]^2, deltas_alt[1:cc], sd_deltas_alt[1:cc],deltas_nonrcts[1:cc]))
+    #print(cbind(cs[1:cc]^2, deltas_alt[1:cc], sd_deltas_alt[1:cc],deltas_nonrcts[1:cc]))
 }
 
 setwd(paste0(root))
@@ -94,7 +95,7 @@ ggsave("output/figures/Main_Alt_ML.pdf")
 makeciplot_triple_gg(cs,deltas_rcts,deltas,deltas_alt,sd_deltas_rcts,sd_deltas,sd_deltas_alt,"RCTs","Uncond. ML","Cond. ML","Many Labs Replications")
 ggsave("output/figures/RCts_Alt_ML.pdf")
 
-makeciplot_double_gg(cs,deltas_rcts,deltas_alt,sd_deltas_rcts,sd_deltas_alt,"RCTs","Many Labs (Alt)","")
+makeciplot_double_gg(cs,deltas_rcts,deltas_alt,sd_deltas_rcts,sd_deltas_alt,"RCTs","Many Labs","")
 ggsave("output/figures/RCts_Alt.pdf")
 
 #Compute p-values of differences over cs
@@ -111,9 +112,9 @@ write.csv(pvals_by_cs,file='pvals_rct_vs_ML_overcs.csv')
 
 #p-values when scaling tuning parameters by number of articles 
 #test for equality
-pval_rcts_ML_articles<- 2*(1-pnorm(abs(out_RCT_articles$deltahat-ML_by_articles$deltahat)/sqrt(out_RCT_articles$varest_delta+ML_by_articles$varest_delta  )))
+pval_rcts_ML_articles<- 2*(1-pnorm(abs(out_RCT_articles$deltahat-ML_by_sites$deltahat)/sqrt(out_RCT_articles$varest_delta+ML_by_sites$varest_delta  )))
 pval_nonrcts_ML_articles <- 2*(1-pnorm(abs(out_RCT_tscores$deltahat-out_other_tscores$deltahat)/sqrt(out_RCT_tscores$varest_delta+out_other_tscores$varest_delta  )))
 pval_rcts_alt_articles<- 2*(1-pnorm(abs(out_RCT_articles$deltahat-out_other_articles$deltahat)/sqrt(out_RCT_articles$varest_delta+out_other_articles$varest_delta  )))
 pval_nonrcts_alt_articles <- 2*(1-pnorm(abs(out_RCT_tscores$deltahat-out_other_tscores$deltahat)/sqrt(out_RCT_tscores$varest_delta+out_other_tscores$varest_delta  )))
-c("P-value of RCTS=non-RCTs (by tscores): ",pval_rcts_nonrcts_tscores, ", P-value of RCTS=non-RCTs (by articles): ",pval_rcts_nonrcts_articles,  )
+#c("P-value of RCTS=non-RCTs (by tscores): ",pval_rcts_nonrcts_tscores, ", P-value of RCTS=non-RCTs (by articles): ",pval_rcts_nonrcts_articles,  )
 
