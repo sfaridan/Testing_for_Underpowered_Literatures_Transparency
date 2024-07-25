@@ -10,6 +10,7 @@
 set.seed(1) 
 
 #Replace root with appropriate path
+#root <- "C:/Users/stefa/OneDrive/Documents/R/Underpowered Literatures"
 setwd(root)
 
 #load in functions

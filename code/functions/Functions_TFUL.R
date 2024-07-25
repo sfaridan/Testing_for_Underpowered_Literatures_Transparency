@@ -54,40 +54,19 @@ estimate_denominator<- function(data,cv,thetahat){
   return(mean( (1+(abs(data)<cv )*(1/thetahat-1)  ) ))
 }
 
-
-trans_data <- function(data,J,cv,c,sigma_Y,thetahat){
+trans_data_new <- function(data,J,cv,c,sigma_Y){
   sigma_X <- sqrt(1-c^(-2)+sigma_Y^2)
   lambda1 <- sigma_Y^2/sigma_X^2
   transformed_data   <- 0*data
   for (j in seq(1,J,2)){ #only even Js will have non-zeor integ-coeff
     integrand   <- function(x){ return(hermite_general(x,j-1,sigma_X)) }
-    integ_coeff <-integrate(integrand, -cv/c,cv/c)$value 
-    trans_data  <- (1+(abs(data)<=cv)*(1/thetahat-1))*dnorm(data/sigma_Y)/sigma_Y*hermite_general(data,j-1,sigma_Y)
-    transformed_data    <- transformed_data+ integ_coeff*(lambda1^(-(j-1)/2))*(trans_data)
+    integ_coeff <-(lambda1^(-(j-1)/2))*integrate(integrand, -cv/c,cv/c)$value #-integrate(integrand, -cv,cv)$value 
+    trans_data  <- dnorm(data/sigma_Y)/sigma_Y*hermite_general(data,j-1,sigma_Y)
+    transformed_data    <- transformed_data+ integ_coeff*(trans_data)
   }
   return(transformed_data)
 }
 
-trans_data_delta <- function(data,J,cv,c,sigma_Y,thetahat){
-  sigma_X <- sqrt(1-c^(-2)+sigma_Y^2)
-  lambda1 <- sigma_Y^2/sigma_X^2
-  transformed_data   <- 0*data
-  for (j in seq(1,J,2)){ #only even Js will have non-zeor integ-coeff
-    integrand   <- function(x){ return(hermite_general(x,j-1,sigma_X)) }
-    integ_coeff <-integrate(integrand, -cv/c,cv/c)$value 
-    trans_data  <- (1+(abs(data)<=cv)*(1/thetahat-1))*dnorm(data/sigma_Y)/sigma_Y*hermite_general(data,j-1,sigma_Y)
-    transformed_data    <- transformed_data+ integ_coeff*(lambda1^(-(j-1)/2)-1)*(trans_data)
-  }
-  return(transformed_data)
-}
-
-
-linearize_thethat <- function(data,cv,bandwidth,thetahat){
-  denom <- mean(((abs(data)<= cv)-(abs(data)<= cv-bandwidth)))
-  term1 <- ((abs(data)<= cv+bandwidth)-(abs(data)<= cv))/denom
-  term2 <- (1/thetahat)*((abs(data)<= cv)-(abs(data)<= cv-bandwidth))/denom
-  return(term1-term2)
-}
 
 make_studymat <- function(studies){
   n <- length(studies)
@@ -150,11 +129,19 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   if(!include_pb){
     output$thetahat <- 1
   }
-  gndata_num <- trans_data(data,J,cv,c,sigma_Y,output$thetahat)
-  gndata_num_delta <- trans_data(data,J,cv,1,sigma_Y,output$thetahat)
-  denomhat <- estimate_denominator(data,cv,output$thetahat)
-  betahat <- mean(gndata_num)/denomhat #estimator(J,cv,c,data,sigma_Y,thetahats[sim])
-  output$deltahat <- mean(gndata_num)/denomhat - mean(gndata_num_delta)/denomhat #mean(gndata_num)/denomhat-mean(abs(data)<cv)/thetahats[sim]/denomhat #mean(gndata_num_delta)/denomhat
+  
+  #define useful terms
+  tupper <- 1*((abs(data)>cv) * (abs(data)<= cv+bandwidth))
+  tlower <- 1*((abs(data)>cv-bandwidth) * (abs(data)<= cv))
+  tsmall <- 1*(abs(data)<=cv)
+  Fcv <- mean( tsmall )
+  thinv <- 1/output$thetahat
+  
+  #estimate delta
+  aj_phi_sigma <- (trans_data_new(data,J,cv,c,sigma_Y)-trans_data_new(data,J,cv,1,sigma_Y))
+  pb_weights <- (1+(thinv-1)*tsmall)/(1+(thinv-1)*Fcv) #removes pb
+  output$deltahat <- mean(aj_phi_sigma*pb_weights)
+  
   
   #Inference
   
@@ -172,12 +159,14 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
     }
   }
   
-  thlin <- linearize_thethat(data,cv,bandwidth,output$thetahat)*(1*include_pb)
-  gndata <- 1*gndata_num/denomhat + thlin*mean(gndata_num*(abs(data)<cv)*(output$thetahat))/denomhat - thlin*mean((abs(data)<cv))*betahat/denomhat 
-  gndata_delta <- gndata - (  1*gndata_num_delta/denomhat + thlin*mean(gndata_num_delta*(abs(data)<cv)*(output$thetahat))/denomhat - thlin*mean((abs(data)<cv))*( mean(gndata_num_delta)/denomhat)/denomhat ) #1*gndata_num_delta/denomhat + thlin*mean(gndata_num_delta*(abs(data)<cv)*(thetahats[sim]))/denomhat - thlin*mean((abs(data)<cv))*deltahats[sim]/denomhat 
-  output$varest_theta <- ( (t(thlin)%*%studymat%*%thlin)/n  -mean(thlin)^2)/n
-  #output$varest_beta <- ((t(gndata)%*%studymat%*%gndata)/n -mean(gndata)^2)/n
-  output$varest_delta <- ((t(gndata_delta)%*%studymat%*%gndata_delta)/n-mean(gndata_delta)^2)/n
+  
+  #variance estimation
+  Xhat <- tupper/mean(tlower)-mean(tupper)/(mean(tlower)^2)*tlower
+  Qhat <- mean(aj_phi_sigma*( tsmall-Fcv)/(1+Fcv*(thinv-1))^2 )
+  Zhat <- aj_phi_sigma*(1+(thinv-1)*tsmall)/(1+(thinv-1)*Fcv)+Qhat*Xhat
+  output$varest_delta <- (t(Zhat-mean(Zhat))%*%studymat%*%(Zhat-mean(Zhat)))/n^2 
+  output$varest_theta <- (t(Xhat-mean(Xhat))%*%studymat%*%(Xhat-mean(Xhat)))/n^2 
+  
   output$sd_delta <- sqrt(output$varest_delta)
   output$sd_theta <- sqrt(output$varest_theta)
   output$num_tscores <- length(data)
@@ -204,17 +193,13 @@ run_sims<- function(parms){
   parms$beta_c                    <- rep(NA,num_parameterizations)
   parms$beta_1                    <- rep(NA,num_parameterizations)
   parms$delta0                    <- rep(NA,num_parameterizations)
-  parms$Mean_betahat              <- rep(NA,num_parameterizations)
   parms$Mean_deltahat             <- rep(NA,num_parameterizations)
   parms$Mean_thetahat             <- rep(NA,num_parameterizations)
-  parms$SD_betahat                <- rep(NA,num_parameterizations)
   parms$SD_deltahat               <- rep(NA,num_parameterizations)
   parms$SD_thetahat               <- rep(NA,num_parameterizations)
-  parms$SD_EST_betahat            <- rep(NA,num_parameterizations)
   parms$SD_EST_deltahat           <- rep(NA,num_parameterizations)
   parms$SD_Est_thetahat           <- rep(NA,num_parameterizations)
   parms$Cover_deltahat            <- rep(NA,num_parameterizations)
-  parms$Cover_betahat             <- rep(NA,num_parameterizations)
   parms$Cover_thetahat            <- rep(NA,num_parameterizations)
   parms$J                         <- rep(NA,num_parameterizations)
   parms$epx                       <- rep(NA,num_parameterizations)
@@ -242,10 +227,8 @@ run_sims<- function(parms){
     
     toc()
     tic()
-    betahats       <- rep(0,nsims)
     deltahats      <- rep(0,nsims)
     thetahats      <- rep(0,nsims)
-    varests        <- rep(0,nsims)
     varests_delta  <- rep(0,nsims)
     varests_theta  <- rep(0,nsims)
     for(sim in 1:parms$nsims[parm]){
@@ -269,35 +252,26 @@ run_sims<- function(parms){
       
       #Record results
       thetahats[sim]     <- output$thetahat
-      betahats[sim]      <- output$betahat
       deltahats[sim]     <- output$deltahat
-      varests[sim]       <- output$varest_beta
       varests_delta[sim] <- output$varest_delta
       varests_theta[sim] <- output$varest_theta
       print(paste0("Parm: ", parm, " of ",num_parameterizations, ", Sim: ", sim, " of ", parms$nsims[parm] ))
-      #print(mean(abs(betahats[1:sim]-parms$beta1[parm])/sqrt(varests[1:sim]) <= 1.96,na.rm=1 )-mean(is.nan(varests[1:sim])))
       print(mean(abs(deltahats[1:sim]-parms$delta0[parm])/sqrt(varests_delta[1:sim]) <= 1.96,na.rm=1 )-mean(is.nan(varests_delta[1:sim])))
-      #print(mean(abs(thetahats[1:sim]-parms$theta0[parm])/sqrt(varests_theta[1:sim]) <= 1.96,na.rm=1 )-mean(is.nan(varests_theta[1:sim])))
-    }
+      }
     
     #Calculate and record results for this parameterization
-    parms$Mean_betahat[parm]         <- mean(betahats)
     parms$Mean_deltahat[parm]        <- mean(deltahats)
     parms$Mean_thetahat[parm]        <- mean(thetahats)
-    parms$SD_betahat[parm]           <- sd(betahats)
     parms$SD_deltahat[parm]          <- sd(deltahats)
     parms$SD_thetahat[parm]          <- sd(thetahats)
-    parms$SD_EST_betahat[parm]       <- sqrt((mean(varests,na.rm=1)))
     parms$SD_EST_deltahat[parm]      <- sqrt((mean(varests_delta,na.rm=1)))
     parms$SD_Est_thetahat[parm]      <- sqrt((mean(varests_theta,na.rm=1)))
     parms$Cover_deltahat[parm]       <-  mean(abs(deltahats-parms$delta0[parm])/sqrt(varests_delta) <= 1.96,na.rm=1 )-mean(is.nan(varests_delta))
-    parms$Cover_betahat[parm]        <-  mean(abs(betahats-parms$beta_c[parm])/sqrt(varests) <= 1.96,na.rm=1 ) -mean(is.nan(varests_delta))
     parms$Cover_thetahat[parm]       <-  mean(abs(thetahats-parms$theta0[parm])/sqrt(varests_theta) <= 1.96,na.rm=1 ) -mean(is.nan(varests_delta))
     
   }
   
-  parms$RMSE_beta  <- sqrt( (parms$Mean_betahat-parms$beta_c)^2+parms$SD_deltahat^2 )
-  parms$RMSE_delta <- sqrt( (parms$Mean_deltahat-parms$delta0)^2+parms$SD_betahat^2 )
+    parms$RMSE_delta <- sqrt( (parms$Mean_deltahat-parms$delta0)^2+parms$SD_deltahat^2 )
   parms$RMSE_theta <- sqrt( (parms$Mean_thetahat-parms$theta0)^2+parms$SD_thetahat^2 )
   
   toc()
