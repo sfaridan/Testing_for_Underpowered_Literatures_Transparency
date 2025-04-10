@@ -1,6 +1,7 @@
 # Testing for Underpowered Literatures
+# April 10, 2025
 # Stefan Faridani
-# February 26, 2024
+# sfaridani6@gatech.edu
 # See README for replication instructions
 # This script is for transparency purposes only. 
 # This code will likely change prior to publication of the article.

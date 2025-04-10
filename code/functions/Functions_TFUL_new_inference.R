@@ -57,7 +57,6 @@ trans_data_new <- function(data,J,cv,c,sigma_Y){
   lambda1 <- sigma_Y^2/sigma_X^2
   transformed_data   <- 0*data
   for (j in seq(1,J,2)){ #only even Js will have non-zeor integ-coeff
-    print(paste0("Transforming by polynomial: ", j," of ", floor(J)))
     integrand   <- function(x){ return(hermite_general(x,j-1,sigma_X)) }
     integ_coeff <-(lambda1^(-(j-1)/2))*integrate(integrand, -cv/c,cv/c)$value #-integrate(integrand, -cv,cv)$value 
     trans_data  <- dnorm(data/sigma_Y)/sigma_Y*hermite_general(data,j-1,sigma_Y)
@@ -109,7 +108,6 @@ get_population <- function(popsize,dgp,c){
   }
   else if (dgp == "large"){ #maximizes delta
     hs <- rnorm(popsize,mean=1.96,sd=0.2) 
-    print("trigger")
   }
   else if (dgp == "worst"){ #make slope of fT at cv as negative as possible
     hs <- rnorm(popsize,mean=0.96,sd=0.2) #runif(popsize,min=1.96-1-band,max=1.96-1+band)
@@ -131,8 +129,6 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   output$num_articles <- length(unique(studies))
   
   #estimate theta
-  print("Estimating theta")
-  tic()
   output$thetahat <- max(min(10,estimate_theta(data,cv,bandwidth)),1/10)
   if(is.nan(output$thetahat) |output$thetahat<=0 ){
     output$thetahat<- 1
@@ -140,7 +136,6 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   if(!include_pb){
     output$thetahat <- 1
   }
-  toc()
   
   
   #define useful terms
@@ -167,10 +162,7 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   }
   else{
     if(is.null(studies2)){
-      print("making studymat")
-      tic()
       studymat <- make_studymat(studies)
-      toc()
     }
     else{
       studymat <- make_studymat(studies)+make_studymat(studies2) >0

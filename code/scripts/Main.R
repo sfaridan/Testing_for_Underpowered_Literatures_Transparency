@@ -1,6 +1,7 @@
 # Testing for Underpowered Literatures
+# April 10, 2025
 # Stefan Faridani
-# July 25, 2024
+# sfaridani6@gatech.edu
 # See README for replication instructions
 # This script is for transparency purposes only. 
 # This code will likely change prior to publication of the article.
@@ -8,11 +9,11 @@
 
 rm(list=ls())
 
-root <- "C:/Users/stefa/OneDrive/Documents/R/Underpowered_Literatures_Transparency"
+root <- "C:/Users/sfaridani6/Documents/GitHub/Testing_for_Underpowered_Literatures_Transparency"
 setwd(root)
 
 #load in functions
-source(paste0(root,"/code/functions/Functions_TFUL.R"))
+source(paste0(root,"/code/functions/Functions_TFUL_new_inference.R"))
 
 #Generate tables and figures
 source(paste0(root,"/code/scripts/Simulations.R"))

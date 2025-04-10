@@ -58,12 +58,10 @@ c <- sqrt(2) #sqrt(1.5)
 
 #Brodeur RCTs, scale tuning parameters with number of t-scores
 #On Faridani's desktop, this block takes 2.2 seconds to run
-tic()
 J_RCT_tscores     <- log(D*(length(MM$t))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
 eps_RCT_tscores <- C*(length(MM$t))^(-1/3)
 out_RCT_tscores <- estimator(MM$t,J=J_RCT_tscores,cv=cv,c=c,sigma_Y=1,bandwidth=eps_RCT_tscores,studies = MM$unique_id,include_pb=TRUE)
 out_RCT_tscores
-toc()
 
 #Brodeur DID, IV, and RDD, scale tuning parameters with number of t-scores
 J_other_tscores     <- log(D*(length(MM_other$t))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
