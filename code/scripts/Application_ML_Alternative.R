@@ -10,7 +10,7 @@
 setwd(root)
 
 #load in functions
-source(paste0(root,"/code/functions/Functions_TFUL.R"))
+source(paste0(root,"/code/functions/Functions_TFUL_new_inference.R"))
 library(ggplot2)
 
 setwd(paste0(root,"/data"))

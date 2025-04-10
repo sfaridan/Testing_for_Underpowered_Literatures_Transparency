@@ -57,6 +57,7 @@ trans_data_new <- function(data,J,cv,c,sigma_Y){
   lambda1 <- sigma_Y^2/sigma_X^2
   transformed_data   <- 0*data
   for (j in seq(1,J,2)){ #only even Js will have non-zeor integ-coeff
+    print(paste0("Transforming by polynomial: ", j," of ", floor(J)))
     integrand   <- function(x){ return(hermite_general(x,j-1,sigma_X)) }
     integ_coeff <-(lambda1^(-(j-1)/2))*integrate(integrand, -cv/c,cv/c)$value #-integrate(integrand, -cv,cv)$value 
     trans_data  <- dnorm(data/sigma_Y)/sigma_Y*hermite_general(data,j-1,sigma_Y)
@@ -65,8 +66,13 @@ trans_data_new <- function(data,J,cv,c,sigma_Y){
   return(transformed_data)
 }
 
-
 make_studymat <- function(studies){
+  studymat <- outer(studies, studies, FUN = "==")
+}
+
+
+
+make_studymat_old <- function(studies){
   n <- length(studies)
   studymat <- diag(n)
   for (i in 1:n){
@@ -125,6 +131,8 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   output$num_articles <- length(unique(studies))
   
   #estimate theta
+  print("Estimating theta")
+  tic()
   output$thetahat <- max(min(10,estimate_theta(data,cv,bandwidth)),1/10)
   if(is.nan(output$thetahat) |output$thetahat<=0 ){
     output$thetahat<- 1
@@ -132,6 +140,8 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   if(!include_pb){
     output$thetahat <- 1
   }
+  toc()
+  
   
   #define useful terms
   tupper <- 1*((abs(data)>cv) * (abs(data)<= cv+bandwidth))
@@ -141,12 +151,15 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   thinv <- 1/output$thetahat
   
   #estimate delta
+
   aj_phi_sigma <- (trans_data_new(data,J,cv,c,sigma_Y)-trans_data_new(data,J,cv,1,sigma_Y))
   pb_weights <- (1+(thinv-1)*tsmall)/(1+(thinv-1)*Fcv) #removes pb
   output$deltahat <- mean(aj_phi_sigma*pb_weights)
+
   
   #Inference
   
+
   #Account for clustering within studies
   if (is.null(studies)){
     studies <- 1:n
@@ -154,7 +167,10 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   }
   else{
     if(is.null(studies2)){
+      print("making studymat")
+      tic()
       studymat <- make_studymat(studies)
+      toc()
     }
     else{
       studymat <- make_studymat(studies)+make_studymat(studies2) >0
@@ -162,6 +178,7 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   }
   
   #variance estimation
+
   Xhat <- tupper/mean(tlower)-mean(tupper)/(mean(tlower)^2)*tlower
   Qhat <- mean(aj_phi_sigma*( tsmall-Fcv)/(1+Fcv*(thinv-1))^2 )
   #Bhat <-  mean(aj_phi_sigma*(thinv-1)*(1+(thinv-1)*tsmall)/(1+Fcv*(thinv-1))^2)
@@ -169,6 +186,7 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   output$varest_delta <- (t(Zhat-mean(Zhat))%*%studymat%*%(Zhat-mean(Zhat)))/n^2 
   
   output$varest_theta <- (t(Xhat-mean(Xhat))%*%studymat%*%(Xhat-mean(Xhat)))/n^2 
+  
   return(output)
 }
 
@@ -352,8 +370,8 @@ makeciplot_double_gg <- function(cs,deltas_1,deltas_2,ses_1,ses_2,title1, title2
   cibot_2[cibot_2 < 0] <- 0
   fields <- data.frame(cs = c(cs^2,cs^2), Literature=c(rep(title1,length(cs)),rep(title2,length(cs))), citop = c(citop_1,citop_2), cibot = c(cibot_1,cibot_2),deltas = c(abs(deltas_1),abs(deltas_2)) )
   ggplot(data=fields[fields$cs >=1,], aes(x=cs, y=citop,group=Literature))  +
-    theme(text = element_text(size = 10)) + 
-    theme(axis.text = element_text(size = 10)) + 
+    theme(text = element_text(size = 20)) + 
+    theme(axis.text = element_text(size = 20)) + 
     geom_ribbon(aes(ymin=cibot, ymax=citop,group=Literature,fill=Literature), linetype=2, alpha=0.4) + ggtitle(main) +
     ylab("Average Power Gain") + xlab("Sample Size Increase Factor") + 
     geom_line(aes(x=cs,y=deltas,group=Literature,color=Literature),lwd=1) + ylim(0,.3) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))

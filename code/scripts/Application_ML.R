@@ -10,7 +10,7 @@
 setwd(root)
 
 #load in functions
-source(paste0(root,"/code/functions/Functions_TFUL.R"))
+source(paste0(root,"/code/functions/Functions_TFUL_new_inference.R"))
 library(ggplot2)
 
 
@@ -178,7 +178,7 @@ for (cc in 1:length(cs))
   
   ML<- estimator(ML_tscores[ind],J=J_ML_tscores,cv=cv,c=cs[cc],sigma_Y=1,bandwidth=eps_ML_tscores,studies = ML_sites[ind],studies2= ML_treatments[ind])
   deltas[cc] <- ML$deltahat
-  sd_deltas[cc] <- ML$sd_delta
+  sd_deltas[cc] <- sqrt(ML$varest_delta)
 
   print(cbind(cs[1:cc]^2, deltas[1:cc], sd_deltas[1:cc]))
 }

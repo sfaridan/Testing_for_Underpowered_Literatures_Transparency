@@ -1,6 +1,7 @@
 # Testing for Underpowered Literatures
 # Stefan Faridani
-# July 25, 2024
+# sfaridani6@gatech.edu
+# April 10, 2025
 # See README for replication instructions
 # This script is for transparency purposes only. 
 # This code will likely change prior to publication of the article.
@@ -10,7 +11,7 @@
 set.seed(1) 
 
 #Replace root with appropriate path
-root <- "C:/Users/stefa/OneDrive/Documents/R/Underpowered Literatures"
+root <- "C:/Users/sfaridani6/Documents/GitHub/Testing_for_Underpowered_Literatures_Transparency"
 setwd(root)
 
 #load in functions
@@ -56,28 +57,30 @@ cv <-  1.96 #2.575
 c <- sqrt(2) #sqrt(1.5)
 
 #Brodeur RCTs, scale tuning parameters with number of t-scores
-#This can take a long time
+#On Faridani's desktop, this block takes 2.2 seconds to run
+tic()
 J_RCT_tscores     <- log(D*(length(MM$t))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
 eps_RCT_tscores <- C*(length(MM$t))^(-1/3)
-out_RCT_tscores <- estimator(MM$t,J=J_RCT_tscores,cv=cv,c=c,sigma_Y=1,bandwidth=eps_RCT_tscores,studies = MM$unique_id,include_pb=1)
+out_RCT_tscores <- estimator(MM$t,J=J_RCT_tscores,cv=cv,c=c,sigma_Y=1,bandwidth=eps_RCT_tscores,studies = MM$unique_id,include_pb=TRUE)
 out_RCT_tscores
+toc()
 
 #Brodeur DID, IV, and RDD, scale tuning parameters with number of t-scores
 J_other_tscores     <- log(D*(length(MM_other$t))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
 eps_other_tscores <- C*(length(MM_other$t))^(-1/3)
-out_other_tscores <- estimator(MM_other$t,J=J_other_tscores,cv=cv,c=c,sigma_Y=1,bandwidth=eps_other_tscores,studies = MM_other$unique_id,include_pb=1)
+out_other_tscores <- estimator(MM_other$t,J=J_other_tscores,cv=cv,c=c,sigma_Y=1,bandwidth=eps_other_tscores,studies = MM_other$unique_id,include_pb=TRUE)
 out_other_tscores
 
 #Brodeur DID, IV, and RDD, scale tuning parameters with number of articles
 J_other_articles     <- log(D*(Other_articles)^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
 eps_other_articles <- C*(Other_articles)^(-1/3)
-out_other_articles <- estimator(MM_other$t,J=J_other_articles,cv=cv,c=c,sigma_Y=1,bandwidth=eps_other_articles,studies = MM_other$unique_id,include_pb=1)
+out_other_articles <- estimator(MM_other$t,J=J_other_articles,cv=cv,c=c,sigma_Y=1,bandwidth=eps_other_articles,studies = MM_other$unique_id,include_pb=TRUE)
 out_other_articles
 
 #Brodeur RCTs, scale tuning parameters with number of articles
 J_RCT_articles     <- log(D*(MM_articles)^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
 eps_RCT_articles <- C*(MM_articles)^(-1/3)
-out_RCT_articles <- estimator(MM$t,J=J_RCT_articles,cv=cv,c=c,sigma_Y=1,bandwidth=eps_RCT_articles,studies = MM$unique_id,include_pb=1)
+out_RCT_articles <- estimator(MM$t,J=J_RCT_articles,cv=cv,c=c,sigma_Y=1,bandwidth=eps_RCT_articles,studies = MM$unique_id,include_pb=TRUE)
 out_RCT_articles
 
 #display main table results
@@ -96,24 +99,27 @@ results <- -cbind(deltas, -ses,citop,cibot)
 round(results,3)
 
 #Make plots
-cs <- sqrt(1+(1:10)/10)
+cs <- sqrt(1+(0:10)/10)
 deltas_rcts <- 0*cs
 deltas_nonrcts <- 0*cs
 sd_deltas_rcts <- 0*cs
 sd_deltas_nonrcts <- 0*cs
-for (cc in 1:length(cs))
+for (cc in 2:length(cs)) #we already know that for c=1, delta=0
 {
+  tic()
   print(paste0("It ", cc, " of ", length(cs)))
   
-  rcts<- estimator(MM$t,J=J_RCT_tscores,cv=cv,c=cs[cc],sigma_Y=1,bandwidth=eps_RCT_tscores,studies = MM$unique_id,include_pb=1)
+  rcts<- estimator(MM$t,J=J_RCT_tscores,cv=cv,c=cs[cc],sigma_Y=1,bandwidth=eps_RCT_tscores,studies = MM$unique_id,include_pb=TRUE)
   deltas_rcts[cc] <- rcts$deltahat
   sd_deltas_rcts[cc] <- sqrt(rcts$varest_delta)
   
-  nonrcts <- estimator(MM_other$t,J=J_other_tscores,cv=cv,c=cs[cc],sigma_Y=1,bandwidth=eps_other_tscores,studies = MM_other$unique_id,include_pb=1)
+  nonrcts <- estimator(MM_other$t,J=J_other_tscores,cv=cv,c=cs[cc],sigma_Y=1,bandwidth=eps_other_tscores,studies = MM_other$unique_id,include_pb=TRUE)
   deltas_nonrcts[cc] <- nonrcts$deltahat
   sd_deltas_nonrcts[cc] <- sqrt(nonrcts$varest_delta)
   
   print(cbind(cs[1:cc]^2, deltas_rcts[1:cc], sd_deltas_rcts[1:cc],deltas_nonrcts[1:cc],  sd_deltas_nonrcts[1:cc]))
+  write.table(cbind(deltas_rcts,sd_deltas_rcts,deltas_nonrcts,sd_deltas_nonrcts,cc),file='MM_plot_as_table.txt',sep=" ")
+  toc()
 }
 setwd(paste0(root))
 makeciplot_double_gg(cs,deltas_rcts,deltas_nonrcts,sd_deltas_rcts,sd_deltas_nonrcts, "RCTs","Quasi-Experiments","")
