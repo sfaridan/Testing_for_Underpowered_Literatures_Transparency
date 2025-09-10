@@ -1,0 +1,2 @@
+"","popsizes","noise_dgp","nu","cvs","cs","ns","sigma_Ys","theta0","J_coeffs","eps_coeffs","nsims","dgps","beta_c","beta_1","delta0","Mean_deltahat","Mean_thetahat","SD_deltahat","SD_thetahat","SD_EST_deltahat","SD_Est_thetahat","Cover_deltahat","Cover_thetahat","J","epx","eps","RMSE_delta","RMSE_theta"
+"1",5e+05,"lognormal",50,1.96,1.4142135623731,1000,1,0.9,1e-04,2,500,"null",0.955564,0.954928,0.00063599999999997,0.0500686787508543,1.52874736898182,0.0419584598605673,0.586786544027214,0.0421972432695275,0,0.778,0,16.6096404744368,NA,0.2,0.0648390475127141,0.860024245154149

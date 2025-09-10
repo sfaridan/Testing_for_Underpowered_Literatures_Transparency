@@ -1,5 +1,5 @@
 # Testing for Underpowered Literatures
-# April 10, 2025
+# Sept 10, 2025
 # Stefan Faridani
 # sfaridani6@gatech.edu
 # See README for replication instructions
@@ -9,7 +9,7 @@
 
 rm(list=ls())
 
-root <- "C:/Users/sfaridani6/Documents/GitHub/Testing_for_Underpowered_Literatures_Transparency"
+root <- "C:/Users/stefa/Onedrive/Documents/GitHub/Testing_for_Underpowered_Literatures_Transparency" #"C:/Users/sfaridani6/Documents/GitHub/Testing_for_Underpowered_Literatures_Transparency"
 setwd(root)
 
 #load in functions

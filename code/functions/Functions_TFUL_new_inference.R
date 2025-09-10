@@ -83,7 +83,7 @@ make_studymat_old <- function(studies){
   return(studymat)
 }
 
-get_population <- function(popsize,dgp,c){
+get_population <- function(popsize,dgp,c,noise_dgp="normal",nu=50){
   
   band <- 0.001
   
@@ -117,7 +117,20 @@ get_population <- function(popsize,dgp,c){
   }
   
   #convert to t-scores
-  pop <- c*hs+rnorm(length(hs),mean=0,sd=1)
+  if(noise_dgp=="normal"){
+    noise <- rnorm(length(hs),mean=0,sd=1)
+  }else if(noise_dgp=="t"){
+    noise <- rt(length(hs),nu)
+  }
+  else if(noise_dgp=="lognormal"){
+    norms             <- rnorm(length(hs)*nu,mean=0,sd=1)
+    mean_log_normal   <- exp(0.5)
+    var_log_normal    <- (exp(1)-1)*exp(1)
+    lognormals        <- (exp(norms)-mean_log_normal)/sqrt(var_log_normal)
+    lognormals_matrix <- matrix(lognormals,nrow=length(hs),ncol=nu)
+    noise             <- lognormals_matrix%*%rep( 1/sqrt(nu), nu)
+  }
+  pop <- c*hs+noise
   return(pop)
 }
 
@@ -218,9 +231,11 @@ run_sims<- function(parms){
     set.seed(parms$seed[parm])
     
     #Draw the population of t-scores
-    population_pre_pb         <- get_population(parms$popsizes[parm],parms$dgps[parm],1)
-    population_counterfactual <- get_population(parms$popsizes[parm],parms$dgps[parm],parms$cs[parm])
+    population_pre_pb         <- get_population(parms$popsizes[parm],parms$dgps[parm],1,noise_dgp=parms$noise_dgp[parm],nu=parms$nu[parm])
+    population_counterfactual <- get_population(parms$popsizes[parm],parms$dgps[parm],parms$cs[parm],noise_dgp=parms$noise_dgp[parm],nu=parms$nu[parm])
     population_post_pb        <- trunc_population(population_pre_pb, parms$cvs[parm], parms$theta0[parm])
+    
+    hist(population_pre_pb)
     
     #Record the key population estimands
     parms$beta_c[parm]        <- mean(abs(population_counterfactual) < parms$cvs[parm])

@@ -11,7 +11,7 @@
 set.seed(1) 
 
 #Replace root with appropriate path
-root <- "C:/Users/sfaridani6/Documents/GitHub/Testing_for_Underpowered_Literatures_Transparency"
+#root <- "C:/Users/sfaridani6/Documents/GitHub/Testing_for_Underpowered_Literatures_Transparency"
 setwd(root)
 
 #load in functions
@@ -19,7 +19,7 @@ source(paste0(root,"/code/functions/Functions_TFUL_new_inference.R"))
 library(ggplot2)
 
 #Load in the data
-setwd(paste0(root,"/data"))
+setwd(paste0("C:/Users/stefa/OneDrive/Documents/R/Underpowered Literatures/data"))
 MM_data <- haven::read_dta('MM data.dta')
 
 #drop observations where the point estimate or standard error are missing (can't de-round) 
@@ -221,3 +221,13 @@ write.csv(table_zcurve, file = 'results_zcurve.csv')
 #[1] 0.14107299 0.01518378
 #> delta +1.96*c(-se_cluster,se_cluster)
 #[1] 0.1113128 0.1708332
+
+# The median number of observations:
+library(dplyr)
+median_val <- MM_data %>%
+  mutate(obs_num = as.numeric(obs)) %>%     # convert to numeric
+  distinct(title, .keep_all = TRUE) %>%     # keep one row per title
+  summarise(med = median(obs_num, na.rm = TRUE)) %>%
+  pull(med)
+median_val
+
