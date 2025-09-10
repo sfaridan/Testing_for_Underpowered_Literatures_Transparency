@@ -280,7 +280,7 @@ run_sims<- function(parms){
       deltahats[sim]     <- output$deltahat
       varests_delta[sim] <- output$varest_delta
       
-      if (sim %% 100==0){
+      if (sim %% 1000==0){
       
       print(paste0("Parm: ", parm, " of ",num_parameterizations, ", Sim: ", sim, " of ", parms$nsims[parm] ))
             print(mean(abs(deltahats[1:sim]-parms$delta0[parm])/sqrt(varests_delta[1:sim]) <= 1.96,na.rm=TRUE )-mean(is.nan(varests_delta[1:sim])))
