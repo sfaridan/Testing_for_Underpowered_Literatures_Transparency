@@ -11,10 +11,10 @@
 setwd(root)
 
 #load in functions
-source(paste0(root,"/code/functions/Functions_TFUL_new_inference.R"))
+source(paste0(root,"/code/functions/Functions_TFUL.R"))
 library(ggplot2)
 
-setwd(paste0(root,"/data"))
+setwd(data)
 filename <- "ML-_Summary_Statistics.xlsx"
 
 cs <- sqrt(1+(0:10)/10)
@@ -67,7 +67,7 @@ for (cc in 1:length(cs))
     
     data_in = readxl::read_excel(filename,sheet="Math_Art Gender")
     data_in <- data_in[c(1:22,24:28),]
-    data_in$`t (unequal var)` <- as.numeric(data_in$`t (unequal var)`,c=cs[cc])
+    data_in$`t (unequal var)` <- as.numeric(data_in$`t (unequal var)`)
     cpower_Math <- compute_cpower(data_in$Site, data_in$`Mean (Female)`, data_in$`Mean (Male)`, data_in$`SD (Female)`, data_in$`SD (Male)`, data_in$`N (Female)`, data_in$`N (Male)`,c=cs[cc])
     powers <- rbind(powers,cpower_Math)
    
@@ -105,7 +105,7 @@ pval_alt_rcts<- 2*(1-pnorm(abs(-deltas_rcts-deltas_alt)/sqrt(sd_deltas_rcts^2+sd
 pval_alt_rcts_uncluster<- 2*(1-pnorm(abs(-deltas_rcts-deltas_alt)/sqrt(sd_deltas_rcts^2+sd_deltas_alt_uncluster^2)))
 pval_alt_non_rcts<- 2*(1-pnorm(abs(-deltas_nonrcts-deltas_alt)/sqrt(sd_deltas_nonrcts^2+sd_deltas_alt^2)))
 pval_ML_non_rcts<- 2*(1-pnorm(abs(-deltas_nonrcts-deltas)/sqrt(sd_deltas_nonrcts^2+sd_deltas^2)))
-pval_ML_non_rcts<- 2*(1-pnorm(abs(-deltas_nonrcts-deltas)/sqrt(sd_deltas_nonrcts^2+sd_deltas^2)))
+pval_ML_rcts<- 2*(1-pnorm(abs(-deltas_rcts-deltas)/sqrt(sd_deltas_rcts^2+sd_deltas^2)))
 c_sq <- cs^2
 pvals_by_cs <- data.frame(c_sq,pval_alt_rcts,pval_alt_rcts_uncluster,pval_alt_non_rcts,pval_ML_non_rcts,pval_ML_non_rcts)
 pvals_by_cs <- round(pvals_by_cs,4)

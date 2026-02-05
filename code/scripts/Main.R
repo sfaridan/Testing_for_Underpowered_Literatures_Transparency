@@ -9,11 +9,12 @@
 
 rm(list=ls())
 
+data <- "C:/Users/stefa/OneDrive/Documents/R/Underpowered Literatures/data" #change to data location
 root <- "C:/Users/stefa/Onedrive/Documents/GitHub/Testing_for_Underpowered_Literatures_Transparency" #"C:/Users/sfaridani6/Documents/GitHub/Testing_for_Underpowered_Literatures_Transparency"
 setwd(root)
 
 #load in functions
-source(paste0(root,"/code/functions/Functions_TFUL_new_inference.R"))
+source(paste0(root,"/code/functions/Functions_TFUL.R"))
 
 #Generate tables and figures
 source(paste0(root,"/code/scripts/Simulations.R"))

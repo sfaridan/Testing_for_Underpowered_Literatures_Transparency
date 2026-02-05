@@ -11,13 +11,13 @@
 setwd(root)
 
 #load in functions
-source(paste0(root,"/code/functions/Functions_TFUL_new_inference.R"))
+source(paste0(root,"/code/functions/Functions_TFUL.R"))
 library(ggplot2)
 
 
 #Many Labs
 
-setwd(paste0(root,"/data"))
+setwd(data)
 filename <- "ML-_Summary_Statistics.xlsx"
 data_in = readxl::read_excel(filename,sheet="Anchoring1")
 cpower_Anchoring1<- compute_cpower(data_in$Site, data_in$`Mean (High)`, data_in$`Mean (Low)`, data_in$`SD (High)`, data_in$`SD (Low)`, data_in$`N (High)`, data_in$`N (Low)`)

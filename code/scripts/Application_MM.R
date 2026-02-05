@@ -15,11 +15,11 @@ set.seed(1)
 setwd(root)
 
 #load in functions
-source(paste0(root,"/code/functions/Functions_TFUL_new_inference.R"))
+source(paste0(root,"/code/functions/Functions_TFUL.R"))
 library(ggplot2)
 
 #Load in the data
-setwd(paste0("C:/Users/stefa/OneDrive/Documents/R/Underpowered Literatures/data"))
+setwd(data)
 MM_data <- haven::read_dta('MM data.dta')
 
 #drop observations where the point estimate or standard error are missing (can't de-round) 
@@ -93,7 +93,7 @@ ses<- sqrt(c(out_RCT_tscores$varest_delta,out_other_tscores$varest_delta,out_RCT
 deltas <- c(out_RCT_tscores$deltahat,out_other_tscores$deltahat,out_RCT_articles$deltahat,out_other_articles$deltahat )
 citop <- deltas+1.96*ses
 cibot <- deltas-1.96*ses
-results <- -cbind(deltas, -ses,citop,cibot)
+results <- -cbind(deltas, ses,cibot,citop)
 round(results,3)
 
 #Make plots
