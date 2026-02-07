@@ -88,6 +88,8 @@ table_econ <- cbind(out_RCT_tscores,out_other_tscores,out_RCT_articles,out_other
 setwd(paste0(root,"/output/tables"))
 write.csv(table_econ, file = 'results_MM.csv')
 
+
+
 #display results nicely
 ses<- sqrt(c(out_RCT_tscores$varest_delta,out_other_tscores$varest_delta,out_RCT_articles$varest_delta,out_other_articles$varest_delta ))
 deltas <- c(out_RCT_tscores$deltahat,out_other_tscores$deltahat,out_RCT_articles$deltahat,out_other_articles$deltahat )
@@ -231,3 +233,18 @@ median_val <- MM_data %>%
   pull(med)
 median_val
 
+
+
+write_mm_table_paper_exact(
+  out_RCT_tscores, out_other_tscores, out_RCT_articles, out_other_articles,
+  floor(J_RCT_tscores), floor(J_other_tscores), floor(J_RCT_articles), floor(J_other_articles),
+  eps_RCT_tscores, eps_other_tscores, eps_RCT_articles, eps_other_articles,
+  t_RCT = MM$t,
+  t_NE  = MM_other$t,
+  tex_file = file.path(root, "output", "tables", "Table_MM_Paper.tex"),
+  cv = 1.96,
+  negate_delta = FALSE,
+  # Optional: if you want to fill zcurve rows, pass these 
+  zcurve_delta_RCT = delta_zcurve_rct,  zcurve_se_RCT = se_rct,
+  zcurve_delta_NE  = delta_zcurve_nonrct, zcurve_se_NE = se_nonrct
+)

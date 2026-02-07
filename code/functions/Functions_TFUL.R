@@ -314,14 +314,14 @@ table_values <- function(parms){
 
 makeciplot_double_gg <- function(cs,deltas_1,deltas_2,ses_1,ses_2,title1, title2,main){
   level <- 1.96
-  citop_1 <- abs(deltas_1)+level*ses_1
-  citop_2 <- abs(deltas_2)+level*ses_2
+  citop_1 <- (deltas_1)+level*ses_1
+  citop_2 <- (deltas_2)+level*ses_2
   print(cbind(citop_1,citop_2,ses_1))
-  cibot_1 <- abs(deltas_1)-level*ses_1
-  cibot_2 <- abs(deltas_2)-level*ses_2
+  cibot_1 <- (deltas_1)-level*ses_1
+  cibot_2 <- (deltas_2)-level*ses_2
   cibot_1[cibot_1 < 0] <- 0
   cibot_2[cibot_2 < 0] <- 0
-  fields <- data.frame(cs = c(cs^2,cs^2), Literature=c(rep(title1,length(cs)),rep(title2,length(cs))), citop = c(citop_1,citop_2), cibot = c(cibot_1,cibot_2),deltas = c(abs(deltas_1),abs(deltas_2)) )
+  fields <- data.frame(cs = c(cs^2,cs^2), Literature=c(rep(title1,length(cs)),rep(title2,length(cs))), citop = c(citop_1,citop_2), cibot = c(cibot_1,cibot_2),deltas = c((deltas_1),(deltas_2)) )
   ggplot(data=fields[fields$cs >=1,], aes(x=cs, y=citop,group=Literature))  +
     theme(text = element_text(size = 20)) + 
     theme(axis.text = element_text(size = 20)) + 
@@ -332,11 +332,11 @@ makeciplot_double_gg <- function(cs,deltas_1,deltas_2,ses_1,ses_2,title1, title2
 
 makeciplot_single_gg <- function(cs,deltas_1,ses_1,main){
   level <- 1.96
-  citop_1 <- abs(deltas_1)+level*ses_1
-  cibot_1 <- abs(deltas_1)-level*ses_1
+  citop_1 <- (deltas_1)+level*ses_1
+  cibot_1 <- (deltas_1)-level*ses_1
   cibot_1[cibot_1 < 0] <- 0
   print(cbind(citop_1,cibot_1))
-  fields <- data.frame(cs = cs^2,  citop = citop_1, cibot = cibot_1,deltas = abs(deltas_1) )
+  fields <- data.frame(cs = cs^2,  citop = citop_1, cibot = cibot_1,deltas = (deltas_1) )
   print(fields)
   ggplot(data=fields[fields$cs >=1,], aes(x=cs, y=citop))  +
     theme(text = element_text(size = 10)) + 
@@ -357,7 +357,7 @@ makeciplot_triple_gg <- function(cs,deltas_1,deltas_2,deltas_3,ses_1,ses_2,ses_3
   cibot_1[cibot_1 < 0] <- 0
   cibot_2[cibot_2 < 0] <- 0
   cibot_3[cibot_3 < 0] <- 0
-  fields <- data.frame(cs = c(cs^2,cs^2,cs^2), Literature=c(rep(title1,length(cs)),rep(title2,length(cs)),rep(title3,length(cs))), citop = c(citop_1,citop_2,citop_3), cibot = c(cibot_1,cibot_2,cibot_3),deltas = c(abs(deltas_1),abs(deltas_2),abs(deltas_3)) )
+  fields <- data.frame(cs = c(cs^2,cs^2,cs^2), Literature=c(rep(title1,length(cs)),rep(title2,length(cs)),rep(title3,length(cs))), citop = c(citop_1,citop_2,citop_3), cibot = c(cibot_1,cibot_2,cibot_3),deltas = c((deltas_1),(deltas_2),(deltas_3)) )
   print(fields)
   ggplot(data=fields[fields$cs >=1,], aes(x=cs, y=citop,group=Literature))  +
     theme(text = element_text(size = 10)) + 
@@ -504,4 +504,342 @@ write_table_like_paper <- function(df, tex_file,
   writeLines(lines, tex_file)
   invisible(tab)
   
+}
+# --- Application MM -> paper-exact LaTeX table (base R, no kableExtra) ---
+
+write_mm_table_paper_exact <- function(
+    out_RCT_tscores, out_NE_tscores, out_RCT_articles, out_NE_articles,
+    J_RCT_tscores, J_NE_tscores, J_RCT_articles, J_NE_articles,
+    eps_RCT_tscores, eps_NE_tscores, eps_RCT_articles, eps_NE_articles,
+    t_RCT, t_NE,
+    tex_file,
+    cv = 1.96,
+    negate_delta = TRUE,
+    # Optional zcurve block (paper shows only under "By Number of t-scores")
+    zcurve_delta_RCT = NULL, zcurve_se_RCT = NULL,
+    zcurve_delta_NE  = NULL, zcurve_se_NE  = NULL,
+    digits_delta = 3, digits_se = 3, digits_ci = 2,
+    digits_theta = 2, digits_theta_se = 2, digits_power = 2,
+    digits_pval = 2
+) {
+  
+  # ---------- helpers ----------
+  # format numeric with "paper style" (drop leading 0 for |x|<1 => .072, -.072, .00)
+  fmt <- function(x, d) {
+    s <- sprintf(paste0("%.", d, "f"), x)
+    s <- sub("^(-?)0\\.", "\\1.", s)  # 0.12 -> .12 ; -0.12 -> -.12
+    s
+  }
+  fmt_paren <- function(x, d) paste0("(", fmt(x, d), ")")
+  fmt_ci <- function(lo, hi, d) paste0("[", fmt(lo, d), ", ", fmt(hi, d), "]")
+  fmt_eps <- function(x, d = 2) paste0("$", fmt(x, d), "$")
+  
+  # ---------- core quantities from estimator outputs (as in Application MM) ----------
+  # Application MM prints results from out_* and uses varest_delta, varest_theta, etc. [1](https://gtvault-my.sharepoint.com/personal/sfaridani6_gatech_edu/Documents/Microsoft%20Copilot%20Chat%20Files/Application%20MM.txt)
+  outs <- list(
+    RCT_ts  = out_RCT_tscores,
+    NE_ts   = out_NE_tscores,
+    RCT_art = out_RCT_articles,
+    NE_art  = out_NE_articles
+  )
+  
+  deltas <- vapply(outs, function(o) o$deltahat, numeric(1))
+  ses    <- sqrt(vapply(outs, function(o) o$varest_delta, numeric(1)))
+  ci_lo  <- deltas - 1.96 * ses
+  ci_hi  <- deltas + 1.96 * ses
+  
+  thetas    <- vapply(outs, function(o) o$thetahat, numeric(1))
+  theta_ses <- sqrt(vapply(outs, function(o) o$varest_theta, numeric(1)))
+  
+  # Paper table displays positive Δ (your script often negates when printing “results”). [1](https://gtvault-my.sharepoint.com/personal/sfaridani6_gatech_edu/Documents/Microsoft%20Copilot%20Chat%20Files/Application%20MM.txt)
+  if (negate_delta) {
+    deltas2 <- -deltas
+    ci_lo2  <- -ci_hi
+    ci_hi2  <- -ci_lo
+    deltas <- deltas2
+    ci_lo  <- ci_lo2
+    ci_hi  <- ci_hi2
+  }
+  
+  # p-values for equality RCT vs NE under each tuning regime (uses your pval_comp()) [1](https://gtvault-my.sharepoint.com/personal/sfaridani6_gatech_edu/Documents/Microsoft%20Copilot%20Chat%20Files/Application%20MM.txt)[2](https://deepwiki.com/haozhu233/kableExtra/4.2-grouping-rows)
+  p_ts  <- pval_comp(out_RCT_tscores, out_NE_tscores)
+  p_art <- pval_comp(out_RCT_articles, out_NE_articles)
+  
+  # Status quo power: empirical rejection rate at cv in observed t-scores (RCT and NE) [1](https://gtvault-my.sharepoint.com/personal/sfaridani6_gatech_edu/Documents/Microsoft%20Copilot%20Chat%20Files/Application%20MM.txt)
+  pwr_RCT <- mean(abs(t_RCT) > cv, na.rm = TRUE)
+  pwr_NE  <- mean(abs(t_NE)  > cv, na.rm = TRUE)
+  
+  # counts from estimator outputs (these are computed inside estimator()) [2](https://deepwiki.com/haozhu233/kableExtra/4.2-grouping-rows)[1](https://gtvault-my.sharepoint.com/personal/sfaridani6_gatech_edu/Documents/Microsoft%20Copilot%20Chat%20Files/Application%20MM.txt)
+  n_t_RCT <- out_RCT_tscores$num_tscores
+  n_t_NE  <- out_NE_tscores$num_tscores
+  n_a_RCT <- out_RCT_tscores$num_articles
+  n_a_NE  <- out_NE_tscores$num_articles
+  
+  # ---------- build LaTeX lines EXACTLY in your provided format ----------
+  # Note: we write literal LaTeX; your pasted input had HTML &amp; but TeX needs &.
+  
+  lines <- c(
+    "\\begin{tabular}{l c c c c c  }",
+    "\\hline \\hline ",
+    " & \\multicolumn{2}{c}{\\textit{By Number of $t$-scores}} &  &\\multicolumn{2}{c}{\\textit{By Number of Articles}} \\\\",
+    "\\cline{2-3} \\cline{5-6} ",
+    "\\\\ & RCTs & Natural Experiments &  & RCTs & Natural Experiments \\\\",
+    "\\hline"
+  )
+  
+  # Row block for Delta_hat
+  lines <- c(lines,
+             paste0(" $\\hat{\\Delta}$ & ", fmt(deltas["RCT_ts"], digits_delta), " & ", fmt(deltas["NE_ts"], digits_delta),
+                    "  & & ", fmt(deltas["RCT_art"], digits_delta), " & ", fmt(deltas["NE_art"], digits_delta), "\\\\"),
+             paste0("  & ", fmt_paren(ses["RCT_ts"], digits_se), "  & ", fmt_paren(ses["NE_ts"], digits_se),
+                    " & & ", fmt_paren(ses["RCT_art"], digits_se), " & ", fmt_paren(ses["NE_art"], digits_se), " \\\\"),
+             paste0("  & ", fmt_ci(ci_lo["RCT_ts"], ci_hi["RCT_ts"], digits_ci), " & ", fmt_ci(ci_lo["NE_ts"], ci_hi["NE_ts"], digits_ci),
+                    " & & ", fmt_ci(ci_lo["RCT_art"], ci_hi["RCT_art"], digits_ci), " & ", fmt_ci(ci_lo["NE_art"], ci_hi["NE_art"], digits_ci),
+                    "\\\\ ")
+  )
+  
+  # Row block for theta_hat
+  lines <- c(lines,
+             paste0("  $\\hat{\\theta}$ & ", fmt(thetas["RCT_ts"], digits_theta), " & ", fmt(thetas["NE_ts"], digits_theta),
+                    " & & ", fmt(thetas["RCT_art"], digits_theta), " & ", fmt(thetas["NE_art"], digits_theta), "\\\\"),
+             paste0("    & ", fmt_paren(theta_ses["RCT_ts"], digits_theta_se), " & ", fmt_paren(theta_ses["NE_ts"], digits_theta_se),
+                    " & & ", fmt_paren(theta_ses["RCT_art"], digits_theta_se), " & ", fmt_paren(theta_ses["NE_art"], digits_theta_se), " \\\\ ")
+  )
+  
+  lines <- c(lines,
+             " \\hline  ",
+             paste0("  J  & ", as.integer(round(J_RCT_tscores)), "& ", as.integer(round(J_NE_tscores)),
+                    " &  & ", as.integer(round(J_RCT_articles)), " & ", as.integer(round(J_NE_articles)), "\\\\"),
+             paste0("  $\\epsilon$ & ", fmt_eps(eps_RCT_tscores, 2), " & ", fmt_eps(eps_NE_tscores, 2),
+                    " &  & ", fmt_eps(eps_RCT_articles, 2), " & ", fmt_eps(eps_NE_articles, 2), " \\\\ \\hline"),
+             paste0("     $=$ RCT (p-value) &  & ", fmt(p_ts, digits_pval),
+                    " &  &  &", fmt(p_art, digits_pval), " \\\\ \\hline ")
+  )
+  
+  # zcurve block (paper shows values only under t-score tuning; article columns blank)
+  if (!is.null(zcurve_delta_RCT) && !is.null(zcurve_se_RCT) &&
+      !is.null(zcurve_delta_NE)  && !is.null(zcurve_se_NE)) {
+    
+    lines <- c(lines,
+               paste0("      $\\hat{\\Delta}$ \\verb|zcurve| & ", fmt(zcurve_delta_RCT, digits_delta),
+                      " &  ", fmt(zcurve_delta_NE, digits_delta), " & &  & \\\\"),
+               paste0("  & ", fmt_paren(zcurve_se_RCT, digits_se),
+                      "  & ", fmt_paren(zcurve_se_NE, digits_se), " & &  &  \\\\ \\hline ")
+    )
+    
+  } else {
+    # exact blank structure as your template
+    lines <- c(lines,
+               "      $\\hat{\\Delta}$ \\verb|zcurve| &  &   & &  & \\\\",
+               "  &   &  & &  &  \\\\ \\hline "
+    )
+  }
+  
+  # bottom block
+  lines <- c(lines,
+             paste0("        Status Quo Power & ", fmt(pwr_RCT, digits_power), " & ", fmt(pwr_NE, digits_power),
+                    " && ", fmt(pwr_RCT, digits_power), " & ", fmt(pwr_NE, digits_power), " \\\\"),
+             paste0("  $t$-scores & ", as.integer(round(n_t_RCT)), " & ", as.integer(round(n_t_NE)),
+                    " &  & ", as.integer(round(n_t_RCT)), " & ", as.integer(round(n_t_NE)), "  \\\\"),
+             paste0("  Articles & ", as.integer(round(n_a_RCT)), "& ", as.integer(round(n_a_NE)),
+                    " &  & ", as.integer(round(n_a_RCT)), "& ", as.integer(round(n_a_NE)), " \\\\"),
+             "\\hline",
+             "\\end{tabular}"
+  )
+  
+  # ---------- robust save ----------
+  dir.create(dirname(tex_file), recursive = TRUE, showWarnings = FALSE)
+  con <- file(tex_file, open = "w", encoding = "UTF-8")
+  on.exit(close(con), add = TRUE)
+  writeLines(lines, con = con)
+  message("MM paper table written to: ", normalizePath(tex_file, winslash = "/", mustWork = FALSE))
+  
+  invisible(lines)
+}
+
+
+write_ml_table_paper_exact <- function(
+    # estimator() outputs
+  ML_by_tscores, ML_by_tscores_r,
+  ML_by_sites,   ML_by_sites_r,
+  
+  # tuning params (already computed in your script)
+  J_ML_tscores,   J_ML_tscores_r,
+  J_ML_sites,     J_ML_sites_r,
+  eps_ML_tscores, eps_ML_tscores_r,
+  eps_ML_sites,   eps_ML_sites_r,
+  
+  # constants shown in the table
+  D_main  , D_rob  ,
+  C_main ,    C_rob ,
+  
+  # data used for unconditional power + counts
+  tscores, sites, treatments,
+  
+  # output
+  tex_file,
+  cv = 1.96,
+  
+  # formatting
+  digits_delta = 3,
+  digits_se    = 3,
+  digits_ci    = 3,
+  digits_theta = 2,
+  digits_theta_se = 2,
+  digits_power = 2,
+  
+  # paper style: CI lower bound truncated at 0
+  truncate_ci_at_zero = TRUE
+) {
+  # ---- helpers: paper-style numeric formatting ----
+  fmt <- function(x, d) {
+    s <- sprintf(paste0("%.", d, "f"), x)
+    s <- sub("^(-?)0\\.", "\\1.", s)  # 0.081 -> .081 ; -0.081 -> -.081
+    s
+  }
+  fmt_paren <- function(x, d) paste0("(", fmt(x, d), ")")
+  
+  fmt_ci <- function(lo, hi, d) {
+    # match paper: show "0" (not .000) when truncated to zero
+    lo_str <- ifelse(abs(lo) < 1e-12, "0", fmt(lo, d))
+    paste0("[", lo_str, ", ", fmt(hi, d), "]")
+  }
+  
+  fmt_eps <- function(x, d = 2) paste0("$", fmt(x, d), "$")
+  
+  # ---- extract results from estimator outputs (as in Application ML) ----
+  outs <- list(
+    ts_main = ML_by_tscores,
+    ts_rob  = ML_by_tscores_r,
+    st_main = ML_by_sites,
+    st_rob  = ML_by_sites_r
+  )
+  
+  deltas <- vapply(outs, function(o) o$deltahat, numeric(1))
+  ses    <- sqrt(vapply(outs, function(o) o$varest_delta, numeric(1)))
+  ci_lo  <- deltas - 1.96 * ses
+  ci_hi  <- deltas + 1.96 * ses
+  
+  if (truncate_ci_at_zero) {
+    ci_lo <- pmax( ci_lo,0)
+  }
+  
+  thetas    <- vapply(outs, function(o) o$thetahat, numeric(1))
+  theta_ses <- sqrt(vapply(outs, function(o) o$varest_theta, numeric(1)))
+  
+  # ---- bottom-block quantities ----
+  unc_power <- mean(abs(tscores) > cv, na.rm = TRUE)
+  
+  n_tscores   <- length(tscores)
+  n_sites     <- length(unique(sites))
+  n_treat     <- length(unique(treatments))
+  
+  # ---- table parameters ----
+  Js <- c(ts_main = J_ML_tscores, ts_rob = J_ML_tscores_r,
+          st_main = J_ML_sites,   st_rob = J_ML_sites_r)
+  
+  eps <- c(ts_main = eps_ML_tscores, ts_rob = eps_ML_tscores_r,
+           st_main = eps_ML_sites,   st_rob = eps_ML_sites_r)
+  
+  # ---- IMPORTANT: your template declares 7 columns: {l c c c c c c}
+  # To avoid LaTeX alignment errors, we write an EXTRA blank final column on every row.
+  # That means every row ends with "... & \\\\" (i.e., a trailing empty cell).
+  endrow <- " \\\\"
+  
+  # ---- build LaTeX lines EXACTLY like the provided format ----
+  lines <- c(
+    "\\begin{tabular}{l c c c c c c }",
+    "\\hline \\hline ",
+    " & \\multicolumn{2}{c}{\\textit{By Number of $t$-scores}} &  &\\multicolumn{2}{c}{\\textit{By Number of Sites}} & \\\\",
+    "\\cline{2-3} \\cline{5-6} ",
+    "\\\\ & Main Specification & Rob. Check &  & Main Specification & Rob. Check & \\\\",
+    "\\hline"
+  )
+  
+  # Δ̂c block
+  lines <- c(lines,
+             paste0(" $\\hat{\\Delta}_c$ & ",
+                    fmt(deltas["ts_main"], digits_delta), " & ", fmt(deltas["ts_rob"], digits_delta),
+                    " & & ",
+                    fmt(deltas["st_main"], digits_delta), " & ", fmt(deltas["st_rob"], digits_delta),
+                    " &", endrow),
+             
+             paste0("& ", fmt_paren(ses["ts_main"], digits_se), " & ", fmt_paren(ses["ts_rob"], digits_se),
+                    " & & ",
+                    fmt_paren(ses["st_main"], digits_se), " & ", fmt_paren(ses["st_rob"], digits_se),
+                    " &", endrow),
+             
+             paste0(" &  ", fmt_ci(ci_lo["ts_main"], ci_hi["ts_main"], digits_ci),
+                    " & ", fmt_ci(ci_lo["ts_rob"],  ci_hi["ts_rob"],  digits_ci),
+                    " & & ",
+                    fmt_ci(ci_lo["st_main"], ci_hi["st_main"], digits_ci),
+                    " & ", fmt_ci(ci_lo["st_rob"],  ci_hi["st_rob"],  digits_ci),
+                    " &", endrow),
+             
+             "    \\hline "
+  )
+  
+  # θ̂ block
+  lines <- c(lines,
+             paste0("  $\\hat{\\theta}$ & ",
+                    fmt(thetas["ts_main"], digits_theta), " & ", fmt(thetas["ts_rob"], digits_theta),
+                    " & & ",
+                    fmt(thetas["st_main"], digits_theta), " & ", fmt(thetas["st_rob"], digits_theta),
+                    " &", endrow),
+             
+             paste0(" & ", fmt_paren(theta_ses["ts_main"], digits_theta_se), " & ", fmt_paren(theta_ses["ts_rob"], digits_theta_se),
+                    " & & ",
+                    fmt_paren(theta_ses["st_main"], digits_theta_se), " & ", fmt_paren(theta_ses["st_rob"], digits_theta_se),
+                    " &", endrow),
+             
+             " \\hline  "
+  )
+  
+  # D, C, J, eps rows (exact labels/structure)
+  lines <- c(lines,
+             paste0(" D  &  ", format(D_main, scientific = TRUE), " &  ", format(D_rob, scientific = TRUE),
+                    " & & ", format(D_main, scientific = TRUE), " & ", format(D_rob, scientific = TRUE),
+                    " &", endrow),
+             
+             paste0("  C  &  $", C_main, "$ & $", C_rob, "$ & & $", C_main, "$ & $", C_rob, "$",
+                    " &", endrow),
+             
+             paste0("  J    & ", as.integer(round(Js["ts_main"])), " & ", as.integer(round(Js["ts_rob"])),
+                    " & & ", as.integer(round(Js["st_main"])), "& ", as.integer(round(Js["st_rob"])),
+                    " &", endrow),
+             
+             paste0("  $\\epsilon$  & ", fmt_eps(eps["ts_main"], 2), " & ", fmt_eps(eps["ts_rob"], 2),
+                    " & &  ", fmt_eps(eps["st_main"], 2), " & ", fmt_eps(eps["st_rob"], 2),
+                    " &", endrow),
+             
+             " \\hline"
+  )
+  
+  # Bottom block: unconditional power + counts (repeated across columns)
+  lines <- c(lines,
+             paste0("     Unconditional Power & ", fmt(unc_power, digits_power), " & ", fmt(unc_power, digits_power),
+                    " &  & ", fmt(unc_power, digits_power), " &", fmt(unc_power, digits_power),
+                    " &", endrow),
+             
+             paste0("  $t$-scores & ", n_tscores, " & ", n_tscores, " & & ", n_tscores, " & ", n_tscores,
+                    " &", endrow),
+             
+             paste0("  Sites & ", n_sites, "& ", n_sites, " & & ", n_sites, " & ", n_sites,
+                    " &", endrow),
+             
+             paste0("  Treatments & ", n_treat, " & ", n_treat, "& & ", n_treat, " & ", n_treat,
+                    " &", endrow),
+             
+             "\\hline",
+             "\\end{tabular}"
+  )
+  
+  # ---- robust write ----
+  dir.create(dirname(tex_file), recursive = TRUE, showWarnings = FALSE)
+  con <- file(tex_file, open = "w", encoding = "UTF-8")
+  on.exit(close(con), add = TRUE)
+  writeLines(lines, con = con)
+  message("ML paper table written to: ", normalizePath(tex_file, winslash = "/", mustWork = FALSE))
+  
+  invisible(lines)
 }

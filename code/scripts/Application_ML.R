@@ -138,6 +138,24 @@ ML_by_tscores_r <- estimator(ML_tscores[ind],J=J_ML_tscores_r,cv=cv,c=c,sigma_Y=
 
 mean(abs(ML_tscores[ind])>1.96)
 
+#Print fully formatted table
+write_ml_table_paper_exact(
+  ML_by_tscores, ML_by_tscores_r,
+  ML_by_sites,   ML_by_sites_r,
+  floor(J_ML_tscores),  floor(J_ML_tscores_r),
+  floor(J_ML_sites),    floor(J_ML_sites_r),
+  eps_ML_tscores, eps_ML_tscores_r,
+  eps_ML_sites,   eps_ML_sites_r,
+  D_main = 1e-4, D_rob = 3e-4,
+  C_main = 2,    C_rob = 1,
+  tscores    = ML_tscores[ind],
+  sites      = ML_sites[ind],
+  treatments = ML_treatments[ind],
+  tex_file = file.path(root, "output", "tables", "Table_ML_Paper.tex"),
+  cv = 1.96, 
+  truncate_ci_at_zero = TRUE
+)
+
 #Alternative estimate assuming that true treatment effects are identical within experiments and across labs
 deltas_by_intervention <- powers[,3]-powers[,2]
 delta_hat_alt <- mean(deltas_by_intervention)
