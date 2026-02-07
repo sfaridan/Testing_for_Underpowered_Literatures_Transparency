@@ -414,3 +414,94 @@ compute_cpower <- function(sites, mean1, mean2, sd1, sd2, n1, n2,c=sqrt(2)){
 pval_comp<- function(out1,out2){
   return( 2*(1-pnorm(abs(out1$deltahat-out2$deltahat)/sqrt(out1$varest_delta+out2$varest_delta  ))))
 }
+
+
+
+write_table_like_paper <- function(df, tex_file,
+                                   dgp_order = c("null","cauchy","realistic","large","worst","unif")) {
+  
+  # Map your internal DGP names to the paper's labels
+  dgp_label <- function(x) {
+    # IMPORTANT: adjust these labels ONLY if your paper uses different names.
+    out <- x
+    out[out == "null"]      <- "True Null"
+    out[out == "cauchy"]    <- "Cauchy"
+    out[out == "realistic"] <- "Bimodal"
+    out[out == "large"]     <- "Large"
+    out[out == "worst"]     <- "Slope"
+    out[out == "unif"]      <- "Uniform"
+    out
+  }
+  
+  # Build the table fields from your simulation output columns
+  tab <- data.frame(
+    n         = df$ns,
+    Pi0       = dgp_label(as.character(df$dgps)),
+    UncPwr    = 1 - df$beta_1,
+    Delta_c   = df$delta0,
+    MeanHat   = df$Mean_deltahat,
+    SDHat     = df$SD_deltahat,
+    MeanSE    = df$SD_EST_deltahat,
+    Cover95   = df$Cover_deltahat,
+    stringsAsFactors = FALSE
+  )
+  
+  # Enforce paper ordering: n ascending, then DGP in specified order
+  tab$dgps_internal <- as.character(df$dgps)
+  tab$dgps_internal <- factor(tab$dgps_internal, levels = dgp_order)
+  tab <- tab[order(tab$n, tab$dgps_internal), ]
+  tab$dgps_internal <- NULL
+  
+  # Two-decimal formatting exactly like the paper
+  fmt2 <- function(x) sprintf("%.2f", x)
+  
+  # Compose LaTeX lines
+  lines <- c(
+    "\\begin{tabular}{ r l r r r r r r r }",
+    "\\hline \\hline ",
+    "\\multicolumn{4}{c}{Parameters }& & \\multicolumn{4}{c}{Results}\\\\",
+    "\\cline{1-4}  \\cline{6-9}\\\\",
+    "  $n$ & $\\Pi_0$ & Unc. Pwr. & $\\Delta_c$ & & Mean $\\hat{\\Delta}_{c,n}$ & SD $\\hat{\\Delta}_{c,n}$ & Mean St. Err. & Cover of 95\\% CI\\\\",
+    "\\hline "
+  )
+  
+  # Row writer with an empty 5th column to match the paper (`& &`)
+  row_tex <- function(r) {
+    paste0(
+      "  ", r$n, "   &   ", r$Pi0,
+      " & ", fmt2(r$UncPwr),
+      " & ", fmt2(r$Delta_c),
+      " & & ", fmt2(r$MeanHat),
+      " & ", fmt2(r$SDHat),
+      " & ", fmt2(r$MeanSE),
+      " & ", fmt2(r$Cover95),
+      "\\\\"
+    )
+  }
+  
+  # Write n=50 block then divider, then n=500 block (as in paper)
+  ns_sorted <- sort(unique(tab$n))
+  if (length(ns_sorted) == 0) stop("No rows to write.")
+  if (length(ns_sorted) > 2) {
+    # still works, but paper example shows two panels; keep behavior explicit
+    warning("More than two n values detected; table will include all panels separated by \\hline.")
+  }
+  
+  for (k in seq_along(ns_sorted)) {
+    nn <- ns_sorted[k]
+    block <- tab[tab$n == nn, ]
+    lines <- c(lines, vapply(seq_len(nrow(block)), function(i) row_tex(block[i, ]), character(1)))
+    
+    # Panel separator exactly like paper (a single \hline between panels)
+    if (k < length(ns_sorted)) {
+      lines <- c(lines, "\\hline  ")
+    }
+  }
+  
+  lines <- c(lines, "\\hline", "\\end{tabular}")
+  
+  print(tex_file)
+  writeLines(lines, tex_file)
+  invisible(tab)
+  
+}
