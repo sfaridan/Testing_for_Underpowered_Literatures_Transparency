@@ -181,13 +181,22 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   
   #variance estimation
 
-  Xhat <- tupper/mean(tlower)-mean(tupper)/(mean(tlower)^2)*tlower
-  Qhat <- mean(data_deconvolved*( tsmall-Fcv)/(1+Fcv*(thinv-1))^2 )
+  
+  
+  if(include_pb==TRUE){
+    Xhat <- tupper/mean(tlower)-mean(tupper)/(mean(tlower)^2)*tlower
+    Qhat <- mean(data_deconvolved*( tsmall-Fcv)/(1+Fcv*(thinv-1))^2 )
+    #Delta method
+    output$varest_theta <- output$thetahat^4*((t(Xhat-mean(Xhat))%*%studymat%*%(Xhat-mean(Xhat)))/n^2) 
+  }
+  else{
+    Xhat <- 0
+    Qhat <- 0
+    output$varest_theta <- 0
+  }
+  
   Zhat <- data_deconvolved*(1+(thinv-1)*tsmall)/(1+(thinv-1)*Fcv)+Qhat*Xhat 
   output$varest_delta <- (t(Zhat-mean(Zhat))%*%studymat%*%(Zhat-mean(Zhat)))/n^2 
-  
-  #Delta method
-  output$varest_theta <- output$thetahat^4*((t(Xhat-mean(Xhat))%*%studymat%*%(Xhat-mean(Xhat)))/n^2) 
   
   return(output)
 }
@@ -197,7 +206,7 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
 # if |T|<cv then stay with probability theta
 trunc_population <- function(untrunc_population, cv, theta){
   randkeep <- runif(length(untrunc_population))
-  truncated <- untrunc_population[ abs(untrunc_population)>= cv | randkeep<=theta  ]
+  truncated <- untrunc_population[ abs(untrunc_population)> cv | randkeep<=theta  ]
   return(truncated)
 }
 
@@ -378,25 +387,6 @@ makeciplot_triple_gg <- function(cs,deltas_1,deltas_2,deltas_3,ses_1,ses_2,ses_3
 
 
 #Computes counterfactual power for a set of experiments all studying the same intervention
-compute_cpower_unweighted <- function(sites, mean1, mean2, sd1, sd2, n1, n2,c=sqrt(2)){
-  ind <- sites != "Overall for US participants:" & sites !="Overall:" & sites !="Mean across samples:" & sites !="Overall (sum of samples)" 
-  es <- mean(mean1[ind]-mean2[ind])
-  hs <- es / sqrt(sd1[ind]^2/n1[ind]+sd2[ind]^2/n2[ind])
-  pwr_status_quo <- 1-pnorm(1.96-hs)+pnorm(-hs-1.96)
-  pwr_c <- 1-pnorm(1.96-c*hs)+pnorm(-c*hs-1.96)
-  rejs <- abs((mean1[ind]-mean2[ind])/sqrt(sd1[ind]^2/n1[ind]+sd2[ind]^2/n2[ind]))>1.96
-  #uncertainty <- sqrt(sd1[1]^2/n1[1]+sd2[1]^2/n2[1]) / mean(sqrt(sd1[ind]^2/n1[ind]+sd2[ind]^2/n2[ind]))
-  #print((mean1[ind]-mean2[ind])/sqrt(sd1[ind]^2/n1[ind]+sd2[ind]^2/n2[ind]))
-  
-  #compute standard error
-  se_es <- sqrt(sum(sd1[ind]^2/n1[ind]) / length(sd1[ind])^2 +sum(sd2[ind]^2/n2[ind]) / length(sd2[ind])^2   )
-  se_hs <- se_es / sqrt(sd1[ind]^2/n1[ind]+sd2[ind]^2/n2[ind]) 
-  se_pwrs <- se_hs * (dnorm(1.96-c*hs)+dnorm(-c*hs-1.96))  #Taylor approximation
-  se_pwr <- mean(se_pwrs) /sqrt(length(se_pwrs))
-  print(paste0("se / es: ", se_es/es, ", se_pwr: ",se_pwr, ", delta: ",mean(pwr_status_quo)- mean(pwr_c) ))
-  
-  return(c(mean(rejs),mean(pwr_status_quo), mean(pwr_c), se_pwr    ))
-}
 
 compute_cpower <- function(sites, mean1, mean2, sd1, sd2, n1, n2,c=sqrt(2)){
   ind <- sites != "Overall for US participants:" & sites !="Overall:" & sites !="Mean across samples:" & sites !="Overall (sum of samples)" 
@@ -412,7 +402,7 @@ compute_cpower <- function(sites, mean1, mean2, sd1, sd2, n1, n2,c=sqrt(2)){
   #compute standard error
   se_es <- sqrt(sum(sd1[ind]^2/n1[ind]*weights^2) +sum(sd2[ind]^2/n2[ind]*weights^2)   )
   se_hs <- se_es / sqrt(sd1[ind]^2/n1[ind]+sd2[ind]^2/n2[ind]) 
-  se_pwrs <- se_hs * abs(c*(dnorm(1.96-c*hs)+dnorm(-c*hs-1.96)) - (dnorm(1.96-hs)+dnorm(-hs-1.96)))  #Taylor approximation
+  se_pwrs <- se_hs * abs(c*(dnorm(1.96-c*hs)-dnorm(-c*hs-1.96)) - (dnorm(1.96-hs)-dnorm(-hs-1.96)))  #Taylor approximation
   se_pwr <- mean(se_pwrs) /sqrt(length(se_pwrs))
   print(paste0("se / es: ", se_es/es, ", se_pwr: ",se_pwr, ", delta: ",mean(pwr_status_quo)- mean(pwr_c) ))
   
