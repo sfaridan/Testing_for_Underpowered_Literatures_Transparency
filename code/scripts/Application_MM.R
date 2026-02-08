@@ -104,10 +104,10 @@ for (cc in 2:length(cs)) #we already know that for c=1, delta=0
 }
 setwd(paste0(root))
 makeciplot_double_gg(cs,deltas_rcts,deltas_nonrcts,sd_deltas_rcts,sd_deltas_nonrcts, "RCTs","Quasi-Experiments","")
-ggsave("output/figures/Two_Plots_MM.pdf")
+ggsave("output/figures/Two_Plots_MM.pdf",width=8,height=5)
 
-makeciplot_double_gg(cs,deltas_rcts,-100*deltas_nonrcts,sd_deltas_rcts,0*sd_deltas_nonrcts, "RCTs","Quasi-Experiments","")
-ggsave("output/figures/One_Plots_MM.jpg")
+#makeciplot_double_gg(cs,deltas_rcts,-100*deltas_nonrcts,sd_deltas_rcts,0*sd_deltas_nonrcts, "RCTs","Quasi-Experiments","")
+#ggsave("output/figures/One_Plots_MM.jpg")
 
 #print significance of differences over cs
 setwd(paste0(root,"/output/tables"))

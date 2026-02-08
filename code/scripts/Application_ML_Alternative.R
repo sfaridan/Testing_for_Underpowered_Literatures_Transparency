@@ -90,14 +90,14 @@ for (cc in 1:length(cs))
 }
 
 setwd(paste0(root))
-makeciplot_double_gg(cs,deltas,deltas_alt,sd_deltas,sd_deltas_alt,"Unconditional","Conditional","Many Labs Replications")
-ggsave("output/figures/Main_Alt_ML.pdf")
+#makeciplot_double_gg(cs,deltas,deltas_alt,sd_deltas,sd_deltas_alt,"Unconditional","Conditional","Many Labs Replications")
+#ggsave("output/figures/Main_Alt_ML.pdf",width=8,height=5)
 
-makeciplot_triple_gg(cs,deltas_rcts,deltas,deltas_alt,sd_deltas_rcts,sd_deltas,sd_deltas_alt,"RCTs","Uncond. ML","Cond. ML","Many Labs Replications")
-ggsave("output/figures/RCts_Alt_ML.pdf")
+#makeciplot_triple_gg(cs,deltas_rcts,deltas,deltas_alt,sd_deltas_rcts,sd_deltas,sd_deltas_alt,"RCTs","Uncond. ML","Cond. ML","Many Labs Replications")
+#ggsave("output/figures/RCts_Alt_ML.pdf",width=8,height=5)
 
 makeciplot_double_gg(cs,deltas_rcts,deltas_alt,sd_deltas_rcts,sd_deltas_alt,"RCTs","Many Labs","")
-ggsave("output/figures/RCts_Alt.pdf")
+ggsave("output/figures/RCts_Alt.pdf",width=8,height=5)
 
 #Compute p-values of differences over cs
 setwd(paste0(root,"/output/tables"))

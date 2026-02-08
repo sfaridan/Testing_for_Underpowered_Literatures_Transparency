@@ -202,8 +202,8 @@ for (cc in 1:length(cs))
   print(cbind(cs[1:cc]^2, deltas[1:cc], sd_deltas[1:cc]))
 }
 setwd(paste0(root))
-makeciplot_single_gg(cs,deltas,sd_deltas,"Many Labs Replications")
-ggsave("output/figures/Single_Plot_ML.pdf")
+#makeciplot_single_gg(cs,deltas,sd_deltas,"Many Labs Replications")
+#ggsave("output/figures/Single_Plot_ML.pdf",width=8,height=5)
 
-makeciplot_double_gg(cs,deltas,deltas_rcts,sd_deltas,sd_deltas_rcts,"Many Labs","RCTs","")
-ggsave("output/figures/ML_vs_RCTs.pdf")
+#makeciplot_double_gg(cs,deltas,deltas_rcts,sd_deltas,sd_deltas_rcts,"Many Labs","RCTs","")
+#ggsave("output/figures/ML_vs_RCTs.pdf",width=8,height=5)
