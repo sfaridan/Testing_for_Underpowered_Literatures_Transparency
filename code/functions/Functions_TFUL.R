@@ -9,6 +9,7 @@ library(magrittr)
 library(ggplot2)
 library(quadprog)
 library(latex2exp)
+library(zcurve)
 
 de_round <- function(x){
   
@@ -842,4 +843,42 @@ write_ml_table_paper_exact <- function(
   message("ML paper table written to: ", normalizePath(tex_file, winslash = "/", mustWork = FALSE))
   
   invisible(lines)
+}
+
+power_function <- function(mu, alpha = 0.05) {
+  z_alpha <- qnorm(1 - alpha / 2)
+  power <- pnorm(-z_alpha - mu) + 1 - pnorm(z_alpha - mu)
+  return(power)
+}
+
+zcurve_with_boot<- function(meta_df,c,boots=100){
+  
+  deltahat <- use_zcurve(meta_df,c)
+  
+  dboots <- rep(0,boots)
+  for (i in 1:boots) {
+    cluster_ids <- unique(meta_df$unique_id)
+    sampled_ids <- sample(cluster_ids, size = length(cluster_ids), replace = TRUE)
+    resampled_list <- vector("list", length(sampled_ids))
+    for (j in seq_along(sampled_ids)) {
+      rows <- meta_df[meta_df$unique_id == sampled_ids[j], ]
+      rows$replicate <- j  # Track which bootstrap replicate this is
+      resampled_list[[j]] <- rows
+    }
+    resampled_df <- do.call(rbind, resampled_list)
+    dboots[i] <- use_zcurve(resampled_df,c)  #(power_function(sqrt(2)*mus_boot)-power_function(mus_boot)) %*%zc_boot$fit$weights
+    print(c(i,sd(dboots[1:i])))
+  }
+  results <- c(deltahat,sd(dboots))
+  return(results)
+}
+
+#uses the zcurve function from Bartlos et al. to estimate Delta
+use_zcurve <- function(meta_df,c){
+  ts                <- as.vector(meta_df$t)
+  tstr              <- paste("z= ",as.character(meta_df$t))
+  zd                <- zcurve_data(tstr,id=as.vector(meta_df$unique_id))
+  zc_rct            <- zcurve(ts,bootstrap=FALSE)
+  delta_zcurve_rct  <- (power_function(c*zc_rct$fit$mu)-power_function(zc_rct$fit$mu))%*%zc_rct$fit$weights
+  return(delta_zcurve_rct)
 }

@@ -110,12 +110,12 @@ ML_sites <- c(ML_sites,data_in$Site)
 ML_treatments <- c(ML_treatments,rep("Math",length(data_in$Site)))
 
 
-ind <- ML_sites != "Overall for US participants:" & ML_sites !="Overall:" & ML_sites !="Mean across samples:" & ML_sites !="Overall (sum of samples)" 
-C<- 2
-D <- 1e-4
-sigma_Y<-1
-cv <- 1.96 #2.575 #1.96
-c <- sqrt(2)
+ind     <- ML_sites != "Overall for US participants:" & ML_sites !="Overall:" & ML_sites !="Mean across samples:" & ML_sites !="Overall (sum of samples)" 
+C       <- 2
+D       <- 1e-4
+sigma_Y <- 1
+cv      <- 1.96 
+c       <- sqrt(2)
 
 J_ML_sites     <- log(D*(length(unique(ML_sites[ind]) ))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
 eps_ML_sites   <- C*(length(unique(ML_sites[ind]) ))^(-1/3)
@@ -152,7 +152,7 @@ write_ml_table_paper_exact(
   sites      = ML_sites[ind],
   treatments = ML_treatments[ind],
   tex_file = file.path(root, "output", "tables", "Table_ML_Paper.tex"),
-  cv = 1.96, 
+  cv = cv, 
   truncate_ci_at_zero = TRUE
 )
 
