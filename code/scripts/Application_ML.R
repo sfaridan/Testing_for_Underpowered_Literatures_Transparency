@@ -168,7 +168,7 @@ for (i in 1:length(ses)){
     var <- var + ses[i]*ses[j]*(j==i)
   }
 }
-var <- var / length(ses)
+var <- var / length(ses)^2
 
 #variance of alternative estimator assuming experiments within sites are perfectly dependent
 var_cluster <- 0
@@ -177,7 +177,7 @@ for (i in 1:length(ses)){
     var_cluster <- var_cluster + ses[i]*ses[j]
   }
 }
-var_cluster <- var_cluster / length(ses)
+var_cluster <- var_cluster / length(ses)^2
 
 #Display results
 print(paste0("Delta_hat_ALT: ", delta_hat_alt,", SE: ", sqrt(var),", SE Cluster:",sqrt(var_cluster) ))

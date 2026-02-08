@@ -103,7 +103,7 @@ get_population <- function(popsize,dgp,c,noise_dgp="normal",nu=50){
     hs <- rnorm(popsize,mean=0.96,sd=0.2) #runif(popsize,min=1.96-1-band,max=1.96-1+band)
   }
   else{
-    error(paste0(dgp," is an invalid dgp name"))
+    stop(paste0(dgp," is an invalid dgp name"))
   }
   
   #convert to t-scores
@@ -127,8 +127,30 @@ get_population <- function(popsize,dgp,c,noise_dgp="normal",nu=50){
 #New inference
 estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,include_pb=TRUE){
   output <-  list()
+  
+  #handle any missing values
+  keep <- !is.na(data)
+  data <- data[keep]
+  if (!is.null(studies))  studies  <- studies[keep]
+  if (!is.null(studies2)) studies2 <- studies2[keep]
   n <- length(data)
-  output$num_tscores <- length(data)
+  
+  #Account for clustering within studies
+  # studies2: for two-way clustering
+  if (is.null(studies)){
+    studies <- 1:n
+    studymat <- diag(n)
+  }
+  else{
+    if(is.null(studies2)){
+      studymat <- make_studymat(studies)
+    }
+    else{
+      studymat <- make_studymat(studies)+make_studymat(studies2) >0
+    }
+  }
+  
+  output$num_tscores  <- length(data)
   output$num_articles <- length(unique(studies))
   
   #estimate theta
@@ -157,22 +179,6 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   
   #Inference
   
-
-  #Account for clustering within studies
-  # studies2: for two-way clustering
-  if (is.null(studies)){
-    studies <- 1:n
-    studymat <- diag(n)
-  }
-  else{
-    if(is.null(studies2)){
-      studymat <- make_studymat(studies)
-    }
-    else{
-      studymat <- make_studymat(studies)+make_studymat(studies2) >0
-    }
-  }
-  
   #variance estimation
 
   Xhat <- tupper/mean(tlower)-mean(tupper)/(mean(tlower)^2)*tlower
@@ -180,7 +186,8 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   Zhat <- data_deconvolved*(1+(thinv-1)*tsmall)/(1+(thinv-1)*Fcv)+Qhat*Xhat 
   output$varest_delta <- (t(Zhat-mean(Zhat))%*%studymat%*%(Zhat-mean(Zhat)))/n^2 
   
-  output$varest_theta <- (t(Xhat-mean(Xhat))%*%studymat%*%(Xhat-mean(Xhat)))/n^2 
+  #Delta method
+  output$varest_theta <- output$thetahat^4*((t(Xhat-mean(Xhat))%*%studymat%*%(Xhat-mean(Xhat)))/n^2) 
   
   return(output)
 }
@@ -212,7 +219,7 @@ run_sims<- function(parms){
   parms$Cover_deltahat            <- rep(NA,num_parameterizations)
   parms$Cover_thetahat            <- rep(NA,num_parameterizations)
   parms$J                         <- rep(NA,num_parameterizations)
-  parms$epx                       <- rep(NA,num_parameterizations)
+  parms$eps                       <- rep(NA,num_parameterizations)
   
   
   #Loop over parameterizations

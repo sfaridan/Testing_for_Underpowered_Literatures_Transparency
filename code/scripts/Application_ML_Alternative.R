@@ -82,40 +82,14 @@ for (cc in 1:length(cs))
         var_uncluster <- var_uncluster + ses[i]*ses[j]*(i==j)
       }
     }
-    var_cluster <- var_cluster / length(ses)
-    var_uncluster <- var_uncluster / length(ses)
+    var_cluster <- var_cluster / length(ses)^2
+    var_uncluster <- var_uncluster / length(ses)^2
     sd_deltas_alt[cc] <-sqrt(var_cluster)
     sd_deltas_alt_uncluster[cc] <-sqrt(var_uncluster)
     #print(cbind(cs[1:cc]^2, deltas_alt[1:cc], sd_deltas_alt[1:cc],deltas_nonrcts[1:cc]))
 }
 
 setwd(paste0(root))
-#makeciplot_double_gg(cs,deltas,deltas_alt,sd_deltas,sd_deltas_alt,"Unconditional","Conditional","Many Labs Replications")
-#ggsave("output/figures/Main_Alt_ML.pdf",width=8,height=5)
-
-#makeciplot_triple_gg(cs,deltas_rcts,deltas,deltas_alt,sd_deltas_rcts,sd_deltas,sd_deltas_alt,"RCTs","Uncond. ML","Cond. ML","Many Labs Replications")
-#ggsave("output/figures/RCts_Alt_ML.pdf",width=8,height=5)
 
 makeciplot_double_gg(cs,deltas_rcts,deltas_alt,sd_deltas_rcts,sd_deltas_alt,"RCTs","Many Labs","")
 ggsave("output/figures/RCts_Alt.pdf",width=8,height=5)
-
-#Compute p-values of differences over cs
-setwd(paste0(root,"/output/tables"))
-pval_alt_rcts<- 2*(1-pnorm(abs(-deltas_rcts-deltas_alt)/sqrt(sd_deltas_rcts^2+sd_deltas_alt^2)))
-pval_alt_rcts_uncluster<- 2*(1-pnorm(abs(-deltas_rcts-deltas_alt)/sqrt(sd_deltas_rcts^2+sd_deltas_alt_uncluster^2)))
-pval_alt_non_rcts<- 2*(1-pnorm(abs(-deltas_nonrcts-deltas_alt)/sqrt(sd_deltas_nonrcts^2+sd_deltas_alt^2)))
-pval_ML_non_rcts<- 2*(1-pnorm(abs(-deltas_nonrcts-deltas)/sqrt(sd_deltas_nonrcts^2+sd_deltas^2)))
-pval_ML_rcts<- 2*(1-pnorm(abs(-deltas_rcts-deltas)/sqrt(sd_deltas_rcts^2+sd_deltas^2)))
-c_sq <- cs^2
-pvals_by_cs <- data.frame(c_sq,pval_alt_rcts,pval_alt_rcts_uncluster,pval_alt_non_rcts,pval_ML_non_rcts,pval_ML_non_rcts)
-pvals_by_cs <- round(pvals_by_cs,4)
-write.csv(pvals_by_cs,file='pvals_rct_vs_ML_overcs.csv')
-
-#p-values when scaling tuning parameters by number of articles 
-#test for equality
-pval_rcts_ML_articles<- 2*(1-pnorm(abs(out_RCT_articles$deltahat-ML_by_sites$deltahat)/sqrt(out_RCT_articles$varest_delta+ML_by_sites$varest_delta  )))
-pval_nonrcts_ML_articles <- 2*(1-pnorm(abs(out_RCT_tscores$deltahat-out_other_tscores$deltahat)/sqrt(out_RCT_tscores$varest_delta+out_other_tscores$varest_delta  )))
-pval_rcts_alt_articles<- 2*(1-pnorm(abs(out_RCT_articles$deltahat-out_other_articles$deltahat)/sqrt(out_RCT_articles$varest_delta+out_other_articles$varest_delta  )))
-pval_nonrcts_alt_articles <- 2*(1-pnorm(abs(out_RCT_tscores$deltahat-out_other_tscores$deltahat)/sqrt(out_RCT_tscores$varest_delta+out_other_tscores$varest_delta  )))
-#c("P-value of RCTS=non-RCTs (by tscores): ",pval_rcts_nonrcts_tscores, ", P-value of RCTS=non-RCTs (by articles): ",pval_rcts_nonrcts_articles,  )
-

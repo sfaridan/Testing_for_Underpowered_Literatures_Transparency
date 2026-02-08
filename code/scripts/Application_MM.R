@@ -20,11 +20,6 @@ source(paste0(root,"/code/functions/Functions_TFUL.R"))
 setwd(data)
 MM_data <- haven::read_dta('MM data.dta')
 
-#drop observations where the point estimate or standard error are missing (can't de-round) 
-to_drop <-  is.na(MM_data$mu) |  is.na(MM_data$sd) # | MM_data$sd == 0  
-to_drop[is.na(to_drop)] <- 1
-sum(to_drop)
-
 #de-round
 MM_data$mu <- de_round(MM_data$mu)
 MM_data$sd <- de_round(MM_data$sd)
@@ -41,8 +36,10 @@ length(unique(MM_data$unique_id))
 #partition data into rcts and non-rcts
 is_rct         <- MM_data$method == "RCT"
 is_not_rct     <- MM_data$method == "RDD" | MM_data$method == "DID" | MM_data$method == "IV"
+is_rct[is.na(is_rct)]         <- FALSE
+is_not_rct[is.na(is_not_rct)] <- FALSE
 MM             <- MM_data[is_rct,]
-MM_other       <-MM_data[is_not_rct,]
+MM_other       <- MM_data[is_not_rct,]
 MM_articles    <- length(unique (MM$unique_id))
 Other_articles <- length(unique (MM_other$unique_id))
 
@@ -58,7 +55,7 @@ c       <- sqrt(2)
 J_RCT_tscores   <- log(D*(length(MM$t))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
 eps_RCT_tscores <- C*(length(MM$t))^(-1/3)
 out_RCT_tscores <- estimator(MM$t,J=J_RCT_tscores,cv=cv,c=c,sigma_Y=1,bandwidth=eps_RCT_tscores,studies = MM$unique_id,include_pb=TRUE)
-out_RCT_tscores
+out_RCT_tscores # main estimate
 
 #Brodeur DID, IV, and RDD, scale tuning parameters with number of t-scores
 J_other_tscores     <- log(D*(length(MM_other$t))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
