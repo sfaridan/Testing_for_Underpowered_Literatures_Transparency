@@ -15,8 +15,8 @@ pval_rcts_ML_tscores   <- pval_comp(out_RCT_tscores,ML_by_tscores) #this one is 
 pval_non_ML_articles   <- pval_comp(out_other_articles,ML_by_sites) 
 pval_non_ML_tscores    <- pval_comp(out_other_tscores,ML_by_tscores)
 
-alt_est_cluster = list(deltahat=-delta_hat_alt, varest_delta =var_cluster )
-alt_est_uncluster = list(deltahat=-delta_hat_alt, varest_delta =var )
+alt_est_cluster = list(deltahat=delta_hat_alt, varest_delta =var_cluster )
+alt_est_uncluster = list(deltahat=delta_hat_alt, varest_delta =var )
 pval_rcts_alt_articles<- pval_comp(out_RCT_articles,alt_est_cluster) 
 pval_rcts_alt_tscores <- pval_comp(out_RCT_tscores,alt_est_uncluster)
 pval_non_alt_articles<- pval_comp(out_other_articles,alt_est_cluster) 

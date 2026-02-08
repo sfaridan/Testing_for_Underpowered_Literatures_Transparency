@@ -70,6 +70,7 @@ deconvolve_data <- function(data,J,cv,c,sigma_Y){
 
 make_studymat <- function(studies){
   studymat <- outer(studies, studies, FUN = "==")
+  return(studymat)
 }
 
 
@@ -154,8 +155,8 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   output$num_articles <- length(unique(studies))
   
   #estimate theta
-  output$thetahat <- max(min(10,estimate_theta(data,cv,bandwidth)),1/10)
-  if(is.nan(output$thetahat) |output$thetahat<=0 ){
+  output$thetahat <- max(min(100,estimate_theta(data,cv,bandwidth)),1/100)
+  if(is.nan(output$thetahat) |output$thetahat<=0 | is.infinite(output$thetahat) ){
     output$thetahat<- 1
   }
   if(!include_pb){
@@ -187,7 +188,7 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
     Xhat <- tupper/mean(tlower)-mean(tupper)/(mean(tlower)^2)*tlower
     Qhat <- mean(data_deconvolved*( tsmall-Fcv)/(1+Fcv*(thinv-1))^2 )
     #Delta method
-    output$varest_theta <- output$thetahat^4*((t(Xhat-mean(Xhat))%*%studymat%*%(Xhat-mean(Xhat)))/n^2) 
+    output$varest_theta <- as.numeric(output$thetahat^4*((t(Xhat-mean(Xhat))%*%studymat%*%(Xhat-mean(Xhat)))/n^2) )
   }
   else{
     Xhat <- 0
@@ -196,7 +197,7 @@ estimator <- function(data,J,cv,c,sigma_Y,bandwidth,studies=NULL,studies2=NULL,i
   }
   
   Zhat <- data_deconvolved*(1+(thinv-1)*tsmall)/(1+(thinv-1)*Fcv)+Qhat*Xhat 
-  output$varest_delta <- (t(Zhat-mean(Zhat))%*%studymat%*%(Zhat-mean(Zhat)))/n^2 
+  output$varest_delta <- as.numeric((t(Zhat-mean(Zhat))%*%studymat%*%(Zhat-mean(Zhat)))/n^2 )
   
   return(output)
 }
@@ -303,7 +304,7 @@ run_sims<- function(parms){
     parms$SD_EST_deltahat[parm]      <- sqrt((mean(varests_delta,na.rm=TRUE)))
     parms$SD_Est_thetahat[parm]      <- sqrt((mean(varests_theta,na.rm=TRUE)))
     parms$Cover_deltahat[parm]       <-  mean(abs(deltahats-parms$delta0[parm])/sqrt(varests_delta) <= 1.96,na.rm=TRUE )-mean(is.nan(varests_delta))
-    parms$Cover_thetahat[parm]       <-  mean(abs(thetahats-parms$theta0[parm])/sqrt(varests_theta) <= 1.96,na.rm=TRUE ) -mean(is.nan(varests_delta))
+    parms$Cover_thetahat[parm]       <-  mean(abs(thetahats-parms$theta0[parm])/sqrt(varests_theta) <= 1.96,na.rm=TRUE ) -mean(is.nan(varests_theta))
     
   }
   
@@ -512,7 +513,7 @@ write_mm_table_paper_exact <- function(
     t_RCT, t_NE,
     tex_file,
     cv = 1.96,
-    negate_delta = TRUE,
+    negate_delta = FALSE,
     # Optional zcurve block (paper shows only under "By Number of t-scores")
     zcurve_delta_RCT = NULL, zcurve_se_RCT = NULL,
     zcurve_delta_NE  = NULL, zcurve_se_NE  = NULL,
