@@ -242,7 +242,6 @@ run_sims<- function(parms){
     population_counterfactual <- get_population(parms$popsizes[parm],parms$dgps[parm],parms$cs[parm],noise_dgp=parms$noise_dgp[parm],nu=parms$nu[parm])
     population_post_pb        <- trunc_population(population_pre_pb, parms$cvs[parm], parms$theta0[parm])
     
-    hist(population_pre_pb)
     
     #Record the key population estimands
     parms$beta_c[parm]        <- mean(abs(population_counterfactual) < parms$cvs[parm])
@@ -405,7 +404,7 @@ compute_cpower <- function(sites, mean1, mean2, sd1, sd2, n1, n2,c=sqrt(2)){
   se_hs <- se_es / sqrt(sd1[ind]^2/n1[ind]+sd2[ind]^2/n2[ind]) 
   se_pwrs <- se_hs * abs(c*(dnorm(1.96-c*hs)-dnorm(-c*hs-1.96)) - (dnorm(1.96-hs)-dnorm(-hs-1.96)))  #Taylor approximation
   se_pwr <- mean(se_pwrs) /sqrt(length(se_pwrs))
-  print(paste0("se / es: ", se_es/es, ", se_pwr: ",se_pwr, ", delta: ",mean(pwr_status_quo)- mean(pwr_c) ))
+  print(paste0("se / es: ", se_es/es, ", se_pwr: ",se_pwr, ", delta: ",mean(pwr_c)-mean(pwr_status_quo)  ))
   
   return(c(mean(rejs),mean(pwr_status_quo), mean(pwr_c), se_pwr    ))
 }
