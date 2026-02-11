@@ -75,6 +75,13 @@ eps_RCT_articles <- C*(MM_articles)^(-1/3)
 out_RCT_articles <- estimator(MM$t,J=J_RCT_articles,cv=cv,c=c,sigma_Y=1,bandwidth=eps_RCT_articles,studies = MM$unique_id,include_pb=TRUE)
 out_RCT_articles
 
+#print results
+ses<- sqrt(c(out_RCT_tscores$varest_delta,out_other_tscores$varest_delta,out_RCT_articles$varest_delta,out_other_articles$varest_delta ))
+deltas <- c(out_RCT_tscores$deltahat,out_other_tscores$deltahat,out_RCT_articles$deltahat,out_other_articles$deltahat )
+citop <- deltas+1.96*ses
+cibot <- deltas-1.96*ses
+results <- -cbind(deltas, ses,cibot,citop)
+round(results,3)
 
 #Make plots
 cs <- sqrt(1+(0:10)/10)
