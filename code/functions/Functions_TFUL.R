@@ -97,6 +97,13 @@ get_population <- function(popsize,dgp,c,noise_dgp="normal",nu=50){
   else if (dgp == "realistic"){ #half are 80% powered, half are small
     hs <- c(rnorm(popsize/2,mean=2.8,sd=1), rnorm(popsize/2,mean=0,sd=1)  )
   }
+  else if(dgp=="zcurve"){
+    mus <- 0:6
+    ww <- c(0.02337049529 , 0.46852351935, 0.01249907347, 0.26803313079, 0.13810301616,
+                  0.00005951759, 0.08941124735)
+    weights <- ww /sum(ww)
+    hs<- sample(mus, size = popsize, replace = TRUE, prob = ww)
+  }
   else if (dgp == "large"){ #maximizes delta
     hs <- rnorm(popsize,mean=1.96,sd=0.2) 
   }
@@ -416,7 +423,7 @@ pval_comp<- function(out1,out2){
 
 
 write_table_like_paper <- function(df, tex_file,
-                                   dgp_order = c("null","cauchy","realistic","large","worst","unif")) {
+                                   dgp_order = c("null","cauchy","realistic","large","worst","unif","zcurve")) {
   
   # Map your internal DGP names to the paper's labels
   dgp_label <- function(x) {
@@ -424,6 +431,7 @@ write_table_like_paper <- function(df, tex_file,
     out <- x
     out[out == "null"]      <- "True Null"
     out[out == "cauchy"]    <- "Cauchy"
+    out[out == "zcurve"]    <- "Zcurve"
     out[out == "realistic"] <- "Bimodal"
     out[out == "large"]     <- "Large"
     out[out == "worst"]     <- "Slope"

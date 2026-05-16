@@ -43,6 +43,10 @@ MM_other       <- MM_data[is_not_rct,]
 MM_articles    <- length(unique (MM$unique_id))
 Other_articles <- length(unique (MM_other$unique_id))
 
+#estimate \Pi_0 parametrically with zcurve
+zout <- zcurve(as.vector(abs(MM$t)),bootstrap=FALSE)
+zout$fit 
+
 #Preferred tuning constants
 C       <- 2
 D       <- 1e-4
