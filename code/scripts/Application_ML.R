@@ -112,27 +112,27 @@ ML_treatments <- c(ML_treatments,rep("Math",length(data_in$Site)))
 
 ind     <- ML_sites != "Overall for US participants:" & ML_sites !="Overall:" & ML_sites !="Mean across samples:" & ML_sites !="Overall (sum of samples)" 
 C       <- 2
-D       <- 1e-4
+D       <- .05
 sigma_Y <- 1
 cv      <- 1.96 
 c       <- sqrt(2)
 
-J_ML_sites     <- log(D*(length(unique(ML_sites[ind]) ))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
+J_ML_sites     <-  get_Jn(length(unique(ML_sites[ind]) ),D=D,sigma_Y=sigma_Y)   #log(D*(length(unique(ML_sites[ind]) ))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
 eps_ML_sites   <- C*(length(unique(ML_sites[ind]) ))^(-1/3)
 ML_by_sites <- estimator(ML_tscores[ind],J=J_ML_sites,cv=cv,c=c,sigma_Y=1,bandwidth=eps_ML_sites,studies = ML_sites[ind],studies2= ML_treatments[ind])
 
-J_ML_tscores     <- log(D*(length(ML_tscores[ind] ))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
+J_ML_tscores     <- get_Jn(length(ML_tscores[ind] ),D=D,sigma_Y=sigma_Y) #log(D*(length(ML_tscores[ind] ))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
 eps_ML_tscores   <- C*(length(ML_tscores[ind]  ))^(-1/3)
 ML_by_tscores <- estimator(ML_tscores[ind],J=J_ML_tscores,cv=cv,c=c,sigma_Y=1,bandwidth=eps_ML_tscores,studies = ML_sites[ind],studies2= ML_treatments[ind])
 
 #robustness check
-D <- 3e-4
+D <- 3*.05
 C <- 1
-J_ML_sites_r     <- log(D*(length(unique(ML_sites[ind]) ))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
+J_ML_sites_r     <- get_Jn(length(unique(ML_sites[ind]) ),D=D,sigma_Y=sigma_Y)
 eps_ML_sites_r   <- C*(length(unique(ML_sites[ind]) ))^(-1/3)
 ML_by_sites_r <- estimator(ML_tscores[ind],J=J_ML_sites_r,cv=cv,c=c,sigma_Y=1,bandwidth=eps_ML_sites_r,studies = ML_sites[ind],studies2= ML_treatments[ind])
 
-J_ML_tscores_r     <- log(D*(length(ML_tscores[ind] ))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
+J_ML_tscores_r     <- get_Jn(length(ML_tscores[ind] ),D=D,sigma_Y=sigma_Y)
 eps_ML_tscores_r   <- C*(length(ML_tscores[ind]  ))^(-1/3)
 ML_by_tscores_r <- estimator(ML_tscores[ind],J=J_ML_tscores_r,cv=cv,c=c,sigma_Y=1,bandwidth=eps_ML_tscores_r,studies = ML_sites[ind],studies2= ML_treatments[ind])
 
@@ -146,7 +146,7 @@ write_ml_table_paper_exact(
   floor(J_ML_sites),    floor(J_ML_sites_r),
   eps_ML_tscores, eps_ML_tscores_r,
   eps_ML_sites,   eps_ML_sites_r,
-  D_main = 1e-4, D_rob = 3e-4,
+  D_main = .05, D_rob = .15,
   C_main = 2,    C_rob = 1,
   tscores    = ML_tscores[ind],
   sites      = ML_sites[ind],

@@ -256,7 +256,7 @@ run_sims<- function(parms){
     parms$delta0[parm]        <- parms$beta_1[parm]- parms$beta_c[parm] 
     
     #tuning parameters that depend on n
-    parms$J[parm]      <- log(parms$J_coeffs[parm] * parms$ns[parm]^(-1/3)) / log(parms$sigma_Ys[parm]^2/ (1+parms$sigma_Ys[parm]^2))
+    parms$J[parm]      <- get_Jn(n=parms$ns[parm],D=parms$J_coeffs[parm],sigma_Y = parms$sigma_Ys[parm]) #log(parms$J_coeffs[parm] * parms$ns[parm]^(-1/3)) / log(parms$sigma_Ys[parm]^2/ (1+parms$sigma_Ys[parm]^2))
     parms$eps[parm]    <- parms$eps_coeffs[parm] * (parms$ns[parm]^(-1/3))
     
     
@@ -886,4 +886,8 @@ use_zcurve <- function(meta_df,c){
   zc_rct            <- zcurve(ts,bootstrap=FALSE)
   delta_zcurve_rct  <- (power_function(c*zc_rct$fit$mu)-power_function(zc_rct$fit$mu))%*%zc_rct$fit$weights
   return(delta_zcurve_rct)
+}
+
+get_Jn<-function(n,D,sigma_Y=1){
+  return( floor(log( D*n^(-1/3) ) / log( sqrt(sigma_Y^2/(1+sigma_Y^2))) ))
 }

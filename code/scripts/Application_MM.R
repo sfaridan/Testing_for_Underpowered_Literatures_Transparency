@@ -49,32 +49,32 @@ zout$fit
 
 #Preferred tuning constants
 C       <- 2
-D       <- 1e-4
+D       <- .05 #1e-4
 sigma_Y <- 1
-cv      <-  1.96  
+cv      <- 1.96  
 c       <- sqrt(2)  
 
 #Brodeur RCTs, scale tuning parameters with number of t-scores
 #On Faridani's desktop, this block takes 2.2 seconds to run
-J_RCT_tscores   <- log(D*(length(MM$t))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
+J_RCT_tscores   <- get_Jn(length(MM$t),D=D,sigma_Y=sigma_Y)  
 eps_RCT_tscores <- C*(length(MM$t))^(-1/3)
 out_RCT_tscores <- estimator(MM$t,J=J_RCT_tscores,cv=cv,c=c,sigma_Y=1,bandwidth=eps_RCT_tscores,studies = MM$unique_id,include_pb=TRUE)
 out_RCT_tscores # main estimate
 
 #Brodeur DID, IV, and RDD, scale tuning parameters with number of t-scores
-J_other_tscores     <- log(D*(length(MM_other$t))^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
+J_other_tscores   <- get_Jn(length(MM_other$t),D=D,sigma_Y=sigma_Y)  
 eps_other_tscores <- C*(length(MM_other$t))^(-1/3)
 out_other_tscores <- estimator(MM_other$t,J=J_other_tscores,cv=cv,c=c,sigma_Y=1,bandwidth=eps_other_tscores,studies = MM_other$unique_id,include_pb=TRUE)
 out_other_tscores
 
 #Brodeur DID, IV, and RDD, scale tuning parameters with number of articles
-J_other_articles   <- log(D*(Other_articles)^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
+J_other_articles   <- get_Jn(Other_articles,D=D,sigma_Y=sigma_Y)  
 eps_other_articles <- C*(Other_articles)^(-1/3)
 out_other_articles <- estimator(MM_other$t,J=J_other_articles,cv=cv,c=c,sigma_Y=1,bandwidth=eps_other_articles,studies = MM_other$unique_id,include_pb=TRUE)
 out_other_articles
 
 #Brodeur RCTs, scale tuning parameters with number of articles
-J_RCT_articles   <- log(D*(MM_articles)^(-1/3))/log(sigma_Y^2/(1+sigma_Y^2))
+J_RCT_articles   <- get_Jn(MM_articles,D=D,sigma_Y=sigma_Y) 
 eps_RCT_articles <- C*(MM_articles)^(-1/3)
 out_RCT_articles <- estimator(MM$t,J=J_RCT_articles,cv=cv,c=c,sigma_Y=1,bandwidth=eps_RCT_articles,studies = MM$unique_id,include_pb=TRUE)
 out_RCT_articles
@@ -98,11 +98,11 @@ for (cc in 2:length(cs)) #we already know that for c=1, delta=0
   tic()
   print(paste0("It ", cc, " of ", length(cs)))
   
-  rcts<- estimator(MM$t,J=J_RCT_tscores,cv=cv,c=cs[cc],sigma_Y=1,bandwidth=eps_RCT_tscores,studies = MM$unique_id,include_pb=TRUE)
+  rcts<- estimator(MM$t,J=J_RCT_tscores,cv=cv,c=cs[cc],sigma_Y=sigma_Y,bandwidth=eps_RCT_tscores,studies = MM$unique_id,include_pb=TRUE)
   deltas_rcts[cc] <- rcts$deltahat
   sd_deltas_rcts[cc] <- sqrt(rcts$varest_delta)
   
-  nonrcts <- estimator(MM_other$t,J=J_other_tscores,cv=cv,c=cs[cc],sigma_Y=1,bandwidth=eps_other_tscores,studies = MM_other$unique_id,include_pb=TRUE)
+  nonrcts <- estimator(MM_other$t,J=J_other_tscores,cv=cv,c=cs[cc],sigma_Y=sigma_Y,bandwidth=eps_other_tscores,studies = MM_other$unique_id,include_pb=TRUE)
   deltas_nonrcts[cc] <- nonrcts$deltahat
   sd_deltas_nonrcts[cc] <- sqrt(nonrcts$varest_delta)
   
