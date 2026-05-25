@@ -5,7 +5,7 @@
 # See README for replication instructions
 # This script is for transparency purposes only. 
 # This code will likely change prior to publication of the article.
-# Run this one!
+# Run this script to reproduce all results in the paper
 
 rm(list=ls())
 
